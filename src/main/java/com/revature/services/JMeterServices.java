@@ -20,34 +20,36 @@ import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 
 public class JMeterServices {
-    
+
     // TODO REMOVE TEMP
     public static final int TEMP_DURATION = 10;
-    
-    private HashTree hashTree;
 
-    public void loadTesting(Swagger swag, LoadTestConfig ltg) {
+    private HashTree hashTree = new HashTree();
+
+    public void loadTesting(Swagger swag, LoadTestConfig testConfig) {
+
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
         // WHERE IS THIS FILE?
-        //JMeterUtils.loadJMeterProperties("../jmeter.properties");
-//        JMeterUtils.initLogging();
-//        JMeterUtils.initLocale();
+        JMeterUtils.loadJMeterProperties("src/test/resources/test.properties");
+        JMeterUtils.initLogging();
+        JMeterUtils.initLocale();
 
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
 
         TestElement loopCtrl = null;
-        if (ltg.loops == 0) {
+        if (testConfig.loops == 0) {
             // TODO implement time duration
         } else {
-            loopCtrl = this.createLoopController(httpSampler, ltg.loops);
+            loopCtrl = this.createLoopController(httpSampler, testConfig.loops);
 
         }
 
-        SetupThreadGroup threadGroup = this.createLoad((LoopController) loopCtrl, ltg.threads, ltg.rampUp, TEMP_DURATION);
+        SetupThreadGroup threadGroup = this.createLoad((LoopController) loopCtrl, testConfig.threads, testConfig.rampUp,
+                TEMP_DURATION);
 
-        TestPlan testPlan = new TestPlan("MY TEST PLAN");
-        
+        TestPlan testPlan = new TestPlan(testConfig.testPlanName);
+
         hashTree.add("testPlan", testPlan);
         hashTree.add("loopCtrl", loopCtrl);
         hashTree.add("threadGroup", threadGroup);
@@ -63,7 +65,7 @@ public class JMeterServices {
      * For OAS 2.0. Parses HTTP request conditions from swagger file and generates
      * an array of HTTPSampler objects based on host, basepath, paths, endpoints,
      * and HTTP verbs
-     * 
+     *
      * @param input Swagger/OpenAPIv2 file input
      * @return Set of HTTPSampler objects. Returns an empty set if there are no
      *         endpoints. Returns null if there is a problem with the Swagger input.
@@ -72,53 +74,62 @@ public class JMeterServices {
         // TODO test
 
         Set<HTTPSampler> httpSamplers = new HashSet<>();
-        String host = input.getHost();
 
-        // trim, remove "
-        host = host.trim();
-        host = host.replaceAll("\"", "");
+        try {
+            String host = input.getHost();
 
-        String[] splitHost = host.split(":");
-        String basePath = input.getBasePath();
-        Map<String, Path> endpoints = input.getPaths();
+            // trim, remove "
+            host = host.trim();
+            host = host.replaceAll("\"", "");
 
-        // each path
-        for (String path : endpoints.keySet()) {
-            Path pathOperations = endpoints.get(path);
-            Map<HttpMethod, Operation> verbs = pathOperations.getOperationMap();
+            String[] splitHost = host.split(":");
+            String basePath = input.getBasePath();
+            Map<String, Path> endpoints = input.getPaths();
 
-            // each verb/operation
-            for (HttpMethod verb : verbs.keySet()) {
-                HTTPSampler element = new HTTPSampler();
+            // each path
+            for (String path : endpoints.keySet()) {
+                Path pathOperations = endpoints.get(path);
+                Map<HttpMethod, Operation> verbs = pathOperations.getOperationMap();
 
-                // domain
-                element.setDomain(splitHost[0]);
-                try {
-                    // port
-                    element.setPort(Integer.parseInt(splitHost[1]));
-                } catch (NumberFormatException e) {
-                    return null;
+                // each verb/operation
+                for (HttpMethod verb : verbs.keySet()) {
+                    HTTPSampler element = new HTTPSampler();
+
+                    // domain
+                    element.setDomain(splitHost[0]);
+                    try {
+                        // port
+                        element.setPort(Integer.parseInt(splitHost[1]));
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                    // path
+                    String fullPath = basePath + path;
+                    // TODO parse path for path var
+                    element.setPath(basePath + path);
+                    // http verb
+                    element.setMethod(verb.toString());
+
+                    this.hashTree.add(element);
+                    httpSamplers.add(element);
                 }
-                // path
-                String fullPath = basePath + path;
-                // TODO parse path for path var
-                element.setPath(basePath + path);
-                // http verb
-                element.setMethod(verb.toString());
-                
-                this.hashTree.add(element);
-                httpSamplers.add(element);
             }
+        } catch (NullPointerException e) {
+            // return empty set in case of missing params
+            // TODO log
+
+            return new HashSet<HTTPSampler>();
         }
-        
 
         return httpSamplers;
     }
 
     /**
-     * Adds each element in the HTTPSampler set as a test element to the loop controller
+     * Adds each element in the HTTPSampler set as a test element to the loop
+     * controller
+     *
      * @param httpSamplers
-     * @param n Number of iterations
+     * @param n            Number of iterations
      * @return Array of LoopController objects based on the httpSamplers
      *         http://svn.apache.org/repos/asf/jmeter/tags/v2_3_2/docs/api/org/apache/jmeter/control/LoopController.html
      */
@@ -133,12 +144,12 @@ public class JMeterServices {
         for (HTTPSampler element : httpSampler) {
             loopCtrl.addTestElement(element);
         }
-        
+
         return loopCtrl;
     }
 
     /**
-     * 
+     *
      * @param loopControllers for thread group
      * @param nThreads        Number of threads.
      * @param rampUp          Ramp up time in seconds.
@@ -160,7 +171,7 @@ public class JMeterServices {
 
     // might get rid of this
     /**
-     * 
+     *
      * @param testPlanName
      * @param httpSampler
      * @param loopController

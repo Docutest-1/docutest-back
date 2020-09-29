@@ -6,8 +6,8 @@
         "title": "Get Example",
         "contact": {}
     },
-    "host": "google.com:80",
-    "basePath": "/",
+    "host": "localhost:8006",
+    "basePath": "/project1",
     "tags": [],
     "paths": {
         "/index": {
