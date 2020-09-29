@@ -1,10 +1,7 @@
-package com.revature.docutest.services;
+package com.revature.services;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Set;
-
-import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,10 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.revature.docutest.TestUtil;
+import com.revature.templates.LoadTestConfig;
 
-class JMeterServiceTest {
+class JMeterServicesTest {
     
-    private JMeterService jmService;
+    private JMeterServices jm;
+    private LoadTestConfig loadConfig = new LoadTestConfig();
 
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
@@ -27,7 +26,11 @@ class JMeterServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        jmService = new JMeterService();
+        loadConfig.loops = 2;
+        loadConfig.rampUp = 2;
+        loadConfig.threads = 20;
+        
+        jm = new JMeterServices();
         TestUtil.initFields();
     }
 
@@ -36,9 +39,8 @@ class JMeterServiceTest {
     }
 
     @Test
-    void testCreateHttpSampler() {
-        Set<HTTPSampler> ret = jmService.createHTTPSampler(TestUtil.swag1);
-        
+    void testTemp() {
+        jm.loadTesting(TestUtil.swag1, loadConfig);
     }
 
 }
