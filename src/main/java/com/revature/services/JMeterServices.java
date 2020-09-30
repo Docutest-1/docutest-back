@@ -1,9 +1,13 @@
 package com.revature.services;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
@@ -12,7 +16,9 @@ import io.swagger.models.Swagger;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
+import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.reporters.Summariser;
+import org.apache.jmeter.save.SaveService;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.SetupThreadGroup;
@@ -35,9 +41,11 @@ public class JMeterServices {
     public boolean loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
+
         JMeterUtils.loadJMeterProperties(propertiesPath);
         JMeterUtils.initLogging();
         JMeterUtils.initLocale();
+
 
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
 
@@ -59,6 +67,19 @@ public class JMeterServices {
         hashTree.add("threadGroup", threadGroup);
 
         jm.configure(hashTree);
+            
+        Summariser summer = null;
+        String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
+        if (summariserName.length() > 0) {
+            summer = new Summariser(summariserName);
+        }
+        
+        String logFile = "/temp/temp/file.jtl";
+        JMeterResponseCollector logger = new JMeterResponseCollector(summer);
+        logger.setFilename(logFile);
+        hashTree.add(hashTree.getArray()[0], logger);
+        
+
 
         // ResultCollector class tracks results
         
