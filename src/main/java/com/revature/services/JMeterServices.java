@@ -1,9 +1,13 @@
 package com.revature.services;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
@@ -12,7 +16,9 @@ import io.swagger.models.Swagger;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
+import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.reporters.Summariser;
+import org.apache.jmeter.save.SaveService;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.SetupThreadGroup;
@@ -26,12 +32,17 @@ public class JMeterServices {
 
     private HashTree hashTree = new HashTree();
 
-    public void loadTesting(Swagger swag, LoadTestConfig testConfig) {
-
+    /**
+     * Runs the JMeter test using a Swagger object
+     * @param swag Input Swagger object
+     * @param testConfig LoadTestConfig object with test settings
+     * @param propertiesPath Filepath to the properties JMeter Properties file
+     * @return True if test runs successfully, false if exception is thrown during the test.
+     */
+    public boolean loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
-        // WHERE IS THIS FILE?
-        JMeterUtils.loadJMeterProperties("src/test/resources/test.properties");
+        JMeterUtils.loadJMeterProperties(propertiesPath);
         JMeterUtils.initLogging();
         JMeterUtils.initLocale();
 
@@ -46,7 +57,7 @@ public class JMeterServices {
         }
 
         SetupThreadGroup threadGroup = this.createLoad((LoopController) loopCtrl, testConfig.threads, testConfig.rampUp,
-                TEMP_DURATION);
+                testConfig.duration);
 
         TestPlan testPlan = new TestPlan(testConfig.testPlanName);
 
@@ -56,7 +67,16 @@ public class JMeterServices {
 
         jm.configure(hashTree);
 
-        // ResultCollector class tracks results
+        Summariser summer = null;
+        String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
+        if (summariserName.length() > 0) {
+            summer = new Summariser(summariserName);
+        }
+
+        String logFile = "/temp/temp/file.jtl";
+        JMeterResponseCollector logger = new JMeterResponseCollector(summer);
+        logger.setFilename(logFile);
+        hashTree.add(hashTree.getArray()[0], logger);
 
         jm.run();
     }
@@ -102,6 +122,8 @@ public class JMeterServices {
                         element.setPort(Integer.parseInt(splitHost[1]));
                     } catch (NumberFormatException e) {
                         return null;
+                    } catch (IndexOutOfBoundsException e) {
+                        return null;
                     }
                     // path
                     String fullPath = basePath + path;
@@ -110,7 +132,7 @@ public class JMeterServices {
                     // http verb
                     element.setMethod(verb.toString());
 
-                    this.hashTree.add(element);
+                    this.hashTree.add("httpSampler", element);
                     httpSamplers.add(element);
                 }
             }
@@ -126,26 +148,26 @@ public class JMeterServices {
 
     /**
      * Adds each element in the HTTPSampler set as a test element to the loop
-     * controller
-     *
-     * @param httpSamplers
-     * @param n            Number of iterations
+     * controller. Returns null if httpSampler is null or has no elements.
+     * @param httpSamplers Set of httpsamplers to iterate add to the loop controller.
+     * @param n Number of iterations
      * @return Array of LoopController objects based on the httpSamplers
-     *         http://svn.apache.org/repos/asf/jmeter/tags/v2_3_2/docs/api/org/apache/jmeter/control/LoopController.html
      */
     public TestElement createLoopController(Set<HTTPSampler> httpSampler, int n) {
-        // TODO implement
-        // TODO null checks
-
         TestElement loopCtrl = new LoopController();
-        ((LoopController) loopCtrl).setFirst(true);
-        ((LoopController) loopCtrl).setLoops(n);
 
-        for (HTTPSampler element : httpSampler) {
-            loopCtrl.addTestElement(element);
+        if (httpSampler != null && httpSampler.size() > 0) {
+            ((LoopController) loopCtrl).setFirst(true);
+            ((LoopController) loopCtrl).setLoops(n);
+
+            for (HTTPSampler element : httpSampler) {
+                loopCtrl.addTestElement(element);
+            }
+
+            return loopCtrl;
         }
 
-        return loopCtrl;
+        return null;
     }
 
     /**
@@ -157,12 +179,16 @@ public class JMeterServices {
      * @return Configured thread group for ramp up test
      */
     public SetupThreadGroup createLoad(LoopController loopController, int threads, int rampUp, int duration) {
-        // TODO implement
+        if (loopController == null) {
+            return null;
+        }
+
         SetupThreadGroup ret = new SetupThreadGroup();
 
+        ret.setNumThreads(threads);
         ret.setRampUp(rampUp);
         ret.setDuration(duration);
-        ret.setSamplerController(loopController);
+        ret.setSamplerController(loopController); // needs to not be null
 
         return ret;
     }
@@ -178,8 +204,8 @@ public class JMeterServices {
      * @param threadGroup
      * @return hashtree for use with StandardJMeterEngine
      */
-    public HashTree createTestConfig(String testPlanName, HTTPSampler httpSampler, LoopController loopController,
-            ThreadGroup threadGroup) {
+    public HashTree createTestConfig(String testPlanName, LoopController loopController,
+            SetupThreadGroup threadGroup) {
         // init hashtree
         HashTree jmConfig = new HashTree();
         TestPlan testPlan = new TestPlan("testPlanName");
@@ -187,18 +213,8 @@ public class JMeterServices {
         jmConfig.add("TestPlan", testPlan);
         jmConfig.add("LoopController", loopController);
         jmConfig.add("ThreadGroup", threadGroup);
-        jmConfig.add("HTTPSampler", httpSampler);
 
         return jmConfig;
-
-    }
-
-    public void runTest(HashTree testConfig) {
-        StandardJMeterEngine jmRunner = new StandardJMeterEngine();
-        jmRunner.configure(testConfig);
-
-        String summaryName = "";
-        Summariser summary = new Summariser(summaryName);
 
     }
 

@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Simple GET Json to localhost:8081",
+        "description": "Simple GET Json from recipepuppy",
         "version": "1.0",
         "title": "Get Example",
         "contact": {}
@@ -10,7 +10,7 @@
     "basePath": "/",
     "tags": [],
     "paths": {
-        "/index": {
+        "/": {
             "get": {
                 "responses": {
                     "200": {
