@@ -32,6 +32,7 @@ class JMeterServicesTest {
         loadConfig.loops = 2;
         loadConfig.rampUp = 2;
         loadConfig.threads = 20;
+        loadConfig.testPlanName = "JMeterServicesTest";
         
         jm = new JMeterServices();
         TestUtil.initFields();
@@ -57,6 +58,16 @@ class JMeterServicesTest {
     @Test
     void testHttpSamplerNull() {
         assertTrue(0 == jm.createHTTPSampler(null).size());
+    }
+    
+    @Test
+    void testHttpSamplerNoReq() {
+        assertTrue(0 == jm.createHTTPSampler(TestUtil.blank).size());
+    }
+    
+    @Test
+    void testHttpSamplerNoHost() {
+        assertTrue(0 == jm.createHTTPSampler(TestUtil.malformed).size());
     }
 
 }
