@@ -1,0 +1,9 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Simple GET Json",
+        "version": "1.0",
+        "title": "Get Example",
+        "contact": {}
+    }
+}
