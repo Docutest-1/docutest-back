@@ -1,14 +1,14 @@
 package com.revature.docutest.services;
 
-import io.swagger.models.Operation;
-import io.swagger.models.Path;
-import io.swagger.models.Swagger;
-import io.swagger.v3.oas.models.OpenAPI;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import io.swagger.models.HttpMethod;
+import io.swagger.models.Operation;
+import io.swagger.models.Path;
+import io.swagger.models.Swagger;
+import io.swagger.v3.oas.models.OpenAPI;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
@@ -30,9 +30,9 @@ public class JMeterService {
      * Returns null if there is a problem with the Swagger input.
      */
     public Set<HTTPSampler> createHTTPSampler(Swagger input) {
+        //TODO test
+        
         Set<HTTPSampler> httpSamplers = new HashSet<>();
-        // TODO implement
-
         String host = input.getHost();
 
         // trim, remove "
@@ -43,21 +43,28 @@ public class JMeterService {
         String basePath = input.getBasePath();
         Map<String, Path> endpoints = input.getPaths();
 
-        // each endpoint
-        for (Map.Entry<String, Path> entry : endpoints.entrySet()) {
-            // each verb
-            for (Operation operation : entry.getValue().getOperations()) {
+        // each path
+        for (String path : endpoints.keySet()) {
+            Path pathOperations = endpoints.get(path);
+            Map<HttpMethod, Operation> verbs = pathOperations.getOperationMap();
+            
+            // each verb/operation
+            for (HttpMethod verb : verbs.keySet()) {
                 HTTPSampler element = new HTTPSampler();
                 
+                // domain
                 element.setDomain(splitHost[0]);
                 try {
+                    // port
                     element.setPort(Integer.parseInt(splitHost[1]));
                 } catch (NumberFormatException e) {
                     return null;
                 }
-                element.setPath(basePath + entry.getKey());
-                
-                
+                // path
+                element.setPath(basePath + path);
+                // http verb
+                element.setMethod(verb.toString());
+
                 httpSamplers.add(element);
             }
         }
