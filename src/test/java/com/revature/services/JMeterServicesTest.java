@@ -26,6 +26,7 @@ class JMeterServicesTest {
     private JMeterServices jm;
     private LoadTestConfig loadConfig = new LoadTestConfig();
     private StandardJMeterEngine engine;
+    private static final String JMeterPropPath = "src/test/resources/test.properties";
 
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
@@ -59,10 +60,52 @@ class JMeterServicesTest {
 
     @Test
     void testRun() {
-        jm.loadTesting(TestUtil.get, loadConfig);
+        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
     }
     
-    // ------------------ EXPLORATORY TESTS ------------------
+ 
+    @Test
+    void testHttpSampler() {
+        Set<HTTPSampler> samplers = jm.createHTTPSampler(TestUtil.get);
+        assertTrue(1 == samplers.size());
+        samplers = jm.createHTTPSampler(TestUtil.todos);
+        assertTrue(7 == samplers.size());
+    }
+    
+    @Test
+    void testHttpSamplerNull() {
+        assertTrue(0 == jm.createHTTPSampler(null).size());
+    }
+    
+    @Test
+    void testHttpSamplerNoReq() {
+        assertTrue(0 == jm.createHTTPSampler(TestUtil.blank).size());
+    }
+    
+    @Test
+    void testHttpSamplerNoHost() {
+        assertTrue(0 == jm.createHTTPSampler(TestUtil.malformed).size());
+    }
+    
+    @Test
+    void testCreateLoopController() {
+        Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
+        LoopController testLC = (LoopController) jm.createLoopController(samplerSet, loadConfig.loops);
+        assertTrue(loadConfig.loops == testLC.getLoops());
+        // way to check loadconfig elements?
+    }
+    
+    @Test
+    void testCreateLoopControllerNull() {
+        assertTrue(null == jm.createLoopController(null, loadConfig.loops));
+    }
+    
+    @Test
+    void testCreateLoopControllerEmptySet() {
+        assertTrue(null == jm.createLoopController(new HashSet<HTTPSampler>(), loadConfig.loops));
+    }
+    
+   // ------------------ EXPLORATORY TESTS ------------------
     
     @Test
     void testRunNullLoopController() {
@@ -111,48 +154,7 @@ class JMeterServicesTest {
         });
     }
     
-    
     // --------------- END OF EXPLORATORY TESTS -------------
-    @Test
-    void testHttpSampler() {
-        Set<HTTPSampler> samplers = jm.createHTTPSampler(TestUtil.get);
-        assertTrue(1 == samplers.size());
-        samplers = jm.createHTTPSampler(TestUtil.todos);
-        assertTrue(7 == samplers.size());
-    }
-    
-    @Test
-    void testHttpSamplerNull() {
-        assertTrue(0 == jm.createHTTPSampler(null).size());
-    }
-    
-    @Test
-    void testHttpSamplerNoReq() {
-        assertTrue(0 == jm.createHTTPSampler(TestUtil.blank).size());
-    }
-    
-    @Test
-    void testHttpSamplerNoHost() {
-        assertTrue(0 == jm.createHTTPSampler(TestUtil.malformed).size());
-    }
-    
-    @Test
-    void testCreateLoopController() {
-        Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
-        LoopController testLC = (LoopController) jm.createLoopController(samplerSet, loadConfig.loops);
-        assertTrue(loadConfig.loops == testLC.getLoops());
-        // way to check loadconfig elements?
-    }
-    
-    @Test
-    void testCreateLoopControllerNull() {
-        assertTrue(null == jm.createLoopController(null, loadConfig.loops));
-    }
-    
-    @Test
-    void testCreateLoopControllerEmptySet() {
-        assertTrue(null == jm.createLoopController(new HashSet<HTTPSampler>(), loadConfig.loops));
-    }
     
 
 }

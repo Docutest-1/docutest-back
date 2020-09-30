@@ -32,10 +32,10 @@ public class JMeterServices {
      * @param testConfig LoadTestConfig object with test settings
      * @return True if test runs successfully, false if exception is thrown during the test.
      */
-    public boolean loadTesting(Swagger swag, LoadTestConfig testConfig) {
+    public boolean loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
-        JMeterUtils.loadJMeterProperties("src/test/resources/test.properties");
+        JMeterUtils.loadJMeterProperties(propertiesPath);
         JMeterUtils.initLogging();
         JMeterUtils.initLocale();
 
