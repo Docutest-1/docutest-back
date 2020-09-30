@@ -100,6 +100,8 @@ public class JMeterServices {
                     return null;
                 }
                 // path
+                String fullPath = basePath + path;
+                // TODO parse path for path var
                 element.setPath(basePath + path);
                 // http verb
                 element.setMethod(verb.toString());
