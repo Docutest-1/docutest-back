@@ -8,7 +8,7 @@ import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
-import io.swagger.v3.oas.models.OpenAPI;
+//import io.swagger.v3.oas.models.OpenAPI;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
@@ -26,7 +26,7 @@ public class JMeterService {
      * and HTTP verbs
      * 
      * @param input Swagger/OpenAPIv2 file input
-     * @return HTTPSampler object array. Returns an empty set if there are no endpoints.
+     * @return Set of HTTPSampler objects. Returns an empty set if there are no endpoints.
      * Returns null if there is a problem with the Swagger input.
      */
     public Set<HTTPSampler> createHTTPSampler(Swagger input) {
@@ -72,17 +72,19 @@ public class JMeterService {
         return httpSamplers;
     }
 
-    /**
-     * For OAS 3.0. Parses HTTP request conditions from swagger file and generates
-     * an array of HTTPSampler objects based on Server array
-     * 
-     * @param input Swagger/OpenAPIv2 file input
-     * @return HTTPSampler object array
-     */
-    public HTTPSampler[] createHTTPSampler(OpenAPI input) {
-        // TODO implement
-        return null;
-    }
+    
+//    /**
+//     * For OAS 3.0. Parses HTTP request conditions from swagger file and generates
+//     * an array of HTTPSampler objects based on Server array
+//     * 
+//     * @param input Swagger/OpenAPIv2 file input
+//     * @return HTTPSampler object array
+//     */
+//    public HTTPSampler[] createHTTPSampler(OpenAPI input) {
+//        // TODO implement
+//        return null;
+//    }
+//    
 
     /**
      * 
@@ -117,7 +119,7 @@ public class JMeterService {
      * @param duration        in seconds
      * @return Configured thread group for ramp up test
      */
-    public SetupThreadGroup createLoad(LoopController loopController, int nThreads, int rampUp, int duration) {
+    public SetupThreadGroup createLoad(LoopController loopController, int threads, int rampUp, int duration) {
         // TODO implement
         SetupThreadGroup ret = new SetupThreadGroup();
 

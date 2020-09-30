@@ -2,13 +2,20 @@ package com.revature.docutest.services;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Set;
+
+import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.revature.docutest.TestUtil;
+
 class JMeterServiceTest {
+    
+    private JMeterService jmService;
 
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
@@ -20,6 +27,8 @@ class JMeterServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        jmService = new JMeterService();
+        TestUtil.initFields();
     }
 
     @AfterEach
@@ -28,7 +37,8 @@ class JMeterServiceTest {
 
     @Test
     void testCreateHttpSampler() {
-        fail("Not yet implemented");
+        Set<HTTPSampler> ret = jmService.createHTTPSampler(TestUtil.swag1);
+        
     }
 
 }

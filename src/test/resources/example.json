@@ -1,0 +1,391 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "REST API for Revature Training Demonstrations",
+    "version": "1.0",
+    "title": "Todos API",
+    "contact": {
+      "name": "Revature",
+      "url": "https://gitlab.revaturelabs.com/revprotodosapi/todos-api",
+      "email": "centerofexcellence@revature.com"
+    },
+    "license": {}
+  },
+  "host": "localhost:8080",
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "todo-controller",
+      "description": "Todo Controller"
+    }
+  ],
+  "paths": {
+    "/todos": {
+      "get": {
+        "tags": [
+          "todo-controller"
+        ],
+        "summary": "View a list of all Todos",
+        "operationId": "findAllUsingGET",
+        "produces": [
+          "application/xml",
+          "application/json",
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "description": "Accept",
+            "required": true,
+            "type": "string",
+            "default": "application/json"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved all available Todos",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Todo"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [
+          "todo-controller"
+        ],
+        "summary": "Create a Todo from a TodoFrom",
+        "operationId": "createUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "description": "Accept",
+            "required": true,
+            "type": "string",
+            "default": "application/json"
+          },
+          {
+            "in": "body",
+            "name": "form",
+            "description": "form",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TodoForm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "201": {
+            "description": "Successfully created Todo from TodoForm"
+          },
+          "400": {
+            "description": "Failed to Create Todo from TodoForm - `title` was missing"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "todo-controller"
+        ],
+        "summary": "Update a Todo from a TodoForm",
+        "operationId": "updateUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json",
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "description": "Accept",
+            "required": true,
+            "type": "string",
+            "default": "application/json"
+          },
+          {
+            "in": "body",
+            "name": "form",
+            "description": "form",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TodoForm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully created Todo from TodoFrom",
+            "schema": {
+              "$ref": "#/definitions/Todo"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Unable to find Todo to update using provided ID"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/todos/truncate": {
+      "delete": {
+        "tags": [
+          "todo-controller"
+        ],
+        "summary": "Truncate all records from Database - Not a standard operation",
+        "operationId": "truncateUsingDELETE",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "204": {
+            "description": "Successfully truncated all records"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/todos/{id}": {
+      "get": {
+        "tags": [
+          "todo-controller"
+        ],
+        "summary": "View a Todo by ID",
+        "operationId": "findByIdUsingGET",
+        "produces": [
+          "application/xml",
+          "application/json",
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "description": "Accept",
+            "required": true,
+            "type": "string",
+            "default": "application/json"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully found Todo by provided ID",
+            "schema": {
+              "$ref": "#/definitions/Todo"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Unable to find Todo by provided ID"
+          }
+        },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [
+          "todo-controller"
+        ],
+        "summary": "Delete a Todo by ID",
+        "operationId": "deleteUsingDELETE",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "204": {
+            "description": "Successfully deleted Todo"
+          },
+          "400": {
+            "description": "Failed to delete Todo - valid path variable was missing"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "deprecated": false
+      },
+      "patch": {
+        "tags": [
+          "todo-controller"
+        ],
+        "summary": "Mark a Todo as `completed` (Partial Update)",
+        "operationId": "completeUsingPATCH",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json",
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "description": "Accept",
+            "required": true,
+            "type": "string",
+            "default": "application/json"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully completed Todo",
+            "schema": {
+              "$ref": "#/definitions/Todo"
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Failed to complete Todo using provided ID"
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "definitions": {
+    "Todo": {
+      "type": "object",
+      "properties": {
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the Todo has been completed"
+        },
+        "createdOn": {
+          "type": "string",
+          "format": "date",
+          "description": "Automatically set at persistence"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Unique Identifier for Todo"
+        },
+        "title": {
+          "type": "string",
+          "description": "The purpose of the Todo - what you need to do"
+        }
+      },
+      "title": "Todo"
+    },
+    "TodoForm": {
+      "type": "object",
+      "properties": {
+        "completed": {
+          "type": "boolean",
+          "description": "Desired `completed` of the Todo"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "description": "(Optional) The ID of the Todo to manipulate"
+        },
+        "title": {
+          "type": "string",
+          "description": "Desired `title` of the Todo"
+        }
+      },
+      "title": "TodoForm"
+    }
+  }
+}
