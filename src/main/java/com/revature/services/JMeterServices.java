@@ -46,8 +46,6 @@ public class JMeterServices {
 
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
 
-        // TODO replace
-        int temp = 0;
         for (HTTPSampler element : httpSampler) {
             TestElement logicController = null;
 
@@ -70,9 +68,9 @@ public class JMeterServices {
             if (summariserName.length() > 0) {
                 summer = new Summariser(summariserName);
             }
-
-            String logFile = "/temp/temp/file" + temp + ".csv";
-            temp++;
+            
+            // May need to change this if we want subdirectories for each user
+            String logFile = "./datafiles/run.csv";
             JMeterResponseCollector logger;
             if (testConfig.duration > 0) {
                 logger = new JMeterResponseCollector(summer, jm, testConfig.duration);
