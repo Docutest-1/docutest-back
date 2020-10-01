@@ -4,6 +4,7 @@ import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.reporters.Summariser;
 import org.apache.jmeter.samplers.SampleEvent;
@@ -20,8 +21,17 @@ public class JMeterResponseCollector extends ResultCollector {
     private long startTime = 0;
     private long currentTime;
     
+    private StandardJMeterEngine engine;
+    private int duration = -1;
+    
     public JMeterResponseCollector(Summariser summer) {
         super(summer);
+    }
+    
+    public JMeterResponseCollector(Summariser summer, StandardJMeterEngine engine, int duration) {
+        super(summer);
+        this.engine = engine;
+        this.duration = duration * 1000;
     }
     
 
@@ -45,6 +55,11 @@ public class JMeterResponseCollector extends ResultCollector {
             okResponse += 1;
         }
         
+        if (duration > 0) {
+            if (currentTime - startTime > duration) {
+                engine.stopTest(false);
+            }
+        }
     }
     
     public float getsuccessFailPercentage() {
