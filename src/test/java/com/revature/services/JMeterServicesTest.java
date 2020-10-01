@@ -8,6 +8,7 @@ import java.util.Set;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
+import org.apache.jmeter.reporters.Summariser;
 import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.SetupThreadGroup;
 import org.apache.jmeter.util.JMeterUtils;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.revature.docutest.TestUtil;
+import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
 
 class JMeterServicesTest {
@@ -72,7 +74,7 @@ class JMeterServicesTest {
         element.setUseKeepAlive(true);
         
         LoopController lc = new LoopController();
-        lc.setLoops(-1);
+        lc.setLoops(5);
         lc.addTestElement(element);
         lc.setFirst(true);
         lc.initialize();
@@ -84,6 +86,16 @@ class JMeterServicesTest {
         config.add("loopController", lc);
         config.add("setupThreadGroup",tg);
         config.add("httpSampler", element);
+        Summariser summer = null;
+        
+        String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
+        if (summariserName.length() > 0) {
+            summer = new Summariser(summariserName);
+        }
+        String logFile = "/temp/temp/file.jtl";
+        JMeterResponseCollector logger = new JMeterResponseCollector(summer);
+        logger.setFilename(logFile);
+        config.add(config.getArray()[0], logger);
         
         engine.configure(config);
         engine.run();
