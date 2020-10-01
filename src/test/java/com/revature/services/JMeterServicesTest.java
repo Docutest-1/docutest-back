@@ -102,45 +102,6 @@ class JMeterServicesTest {
 //        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
     }
 
-    @Test
-    void testSummary() {
-        HTTPSampler element = new HTTPSampler();
-
-        element.setProtocol(HTTPSampler.PROTOCOL_HTTP);
-        element.setDomain("google.com");
-        element.setPort(80);
-        element.setPath("/");
-        // http verb
-        element.setMethod("GET");
-        element.setUseKeepAlive(true);
-
-        LoopController lc = new LoopController();
-        lc.setLoops(5);
-        lc.addTestElement(element);
-        lc.setFirst(true);
-        lc.initialize();
-
-        SetupThreadGroup tg = jm.createLoad(lc, 50, 2, 2);
-
-        HashTree config = new HashTree();
-        config.add("testPlan", new TestPlan("test"));
-        config.add("loopController", lc);
-        config.add("setupThreadGroup", tg);
-        config.add("httpSampler", element);
-        Summariser summer = null;
-
-        String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
-        if (summariserName.length() > 0) {
-            summer = new Summariser(summariserName);
-        }
-        String logFile = "/temp/temp/file.jtl";
-        JMeterResponseCollector logger = new JMeterResponseCollector(summer);
-        logger.setFilename(logFile);
-        config.add(config.getArray()[0], logger);
-
-        engine.configure(config);
-        engine.run();
-    }
 
     @Test
     void testHttpSampler() {
