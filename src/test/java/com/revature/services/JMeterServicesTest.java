@@ -41,19 +41,13 @@ class JMeterServicesTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        loadConfig.duration = 10;
-        loadConfig.loops = 2;
+        loadConfig.loops = 1;
         loadConfig.rampUp = 2;
         loadConfig.threads = 20;
         loadConfig.testPlanName = "JMeterServicesTest";
 
         jm = new JMeterServices();
         TestUtil.initFields();
-
-//        engine = new StandardJMeterEngine();
-//        JMeterUtils.loadJMeterProperties(JMeterPropPath);
-//        // JMeterUtils.initLogging();
-//        JMeterUtils.initLocale();
     }
 
     @AfterEach
@@ -61,7 +55,15 @@ class JMeterServicesTest {
     }
 
     @Test
-    void testLoadTesting() {
+    void testLoadTestingLoop() {
+        loadConfig.loops = 2;
+        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
+    }
+    
+    @Test
+    void testLoadTestingDuration() {
+        loadConfig.duration = 3;
+        loadConfig.loops = -1;
         jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
     }
 
@@ -111,8 +113,7 @@ class JMeterServicesTest {
     @Test
     void testRunNullLoopController() {
         Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
-        SetupThreadGroup testThreadGroup = jm.createLoad(null, loadConfig.threads, loadConfig.rampUp,
-                loadConfig.duration);
+        SetupThreadGroup testThreadGroup = jm.createLoad(null, loadConfig.threads, loadConfig.rampUp);
         HashTree testHashTree = jm.createTestConfig(loadConfig.testPlanName, null, testThreadGroup);
         assertThrows(NullPointerException.class, () -> {
             engine.configure(testHashTree);
@@ -128,8 +129,7 @@ class JMeterServicesTest {
         for (HTTPSampler element : samplerSet) {
             LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.loops);
 
-            SetupThreadGroup testThreadGroup = jm.createLoad(testLC, loadConfig.threads, loadConfig.rampUp,
-                    loadConfig.duration);
+            SetupThreadGroup testThreadGroup = jm.createLoad(testLC, loadConfig.threads, loadConfig.rampUp);
             HashTree testHashTree = jm.createTestConfig(loadConfig.testPlanName, testLC, null);
 
             assertThrows(NullPointerException.class, () -> {
@@ -146,8 +146,7 @@ class JMeterServicesTest {
         for (HTTPSampler element : samplerSet) {
             LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.loops);
 
-            SetupThreadGroup testThreadGroup = jm.createLoad(testLC, loadConfig.threads, loadConfig.rampUp,
-                    loadConfig.duration);
+            SetupThreadGroup testThreadGroup = jm.createLoad(testLC, loadConfig.threads, loadConfig.rampUp);
             HashTree testHashTree = jm.createTestConfig(loadConfig.testPlanName, testLC, testThreadGroup);
             engine.configure(testHashTree);
             engine.run();
