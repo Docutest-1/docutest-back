@@ -31,8 +31,8 @@ public class JMeterServices {
     private HashTree hashTree = new HashTree();
 
     /**
-     * Runs the JMeter test using a Swagger object, test configuration, and JMeter
-     * properties path.
+     * Runs the JMeter test using a Swagger object, test configuration, and JMeter properties path.
+     * If both duration and number of loops are set, duration takes precedence.
      * @param swag           Input Swagger object
      * @param testConfig     LoadTestConfig object with test settings
      * @param propertiesPath File path to the properties JMeter Properties file
@@ -41,7 +41,6 @@ public class JMeterServices {
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
         JMeterUtils.loadJMeterProperties(propertiesPath);
-        // JMeterUtils.initLogging();
         JMeterUtils.initLocale();
 
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
@@ -70,6 +69,7 @@ public class JMeterServices {
             }
             
             // May need to change this if we want subdirectories for each user
+            // Definitely need to change if we want multiple users to run multiple tests at once
             String logFile = "./datafiles/run.csv";
             JMeterResponseCollector logger;
             if (testConfig.duration > 0) {
@@ -82,7 +82,6 @@ public class JMeterServices {
 
             try {
                 jm.run();
-
             } catch (Exception e) {
                 // TODO log
                 e.printStackTrace();
@@ -187,7 +186,6 @@ public class JMeterServices {
     /**
      * Configures a LoopController with the given loop count and httpSampler.
      * Alternative to createRunTimeController. Returns null if httpSampler is null.
-     * 
      * @param httpSampler HTTPSampler object representing a request
      * @param loops       Number of iterations
      * @return Covariant LoopController object.
@@ -204,7 +202,7 @@ public class JMeterServices {
     }
 
     /**
-     * 
+     * Creates a thread group with the given parameters. 
      * @param loopControllers for thread group
      * @param nThreads        Number of threads.
      * @param rampUp          Ramp up time in seconds.
@@ -224,29 +222,4 @@ public class JMeterServices {
 
         return ret;
     }
-
-    // May want a separate method for setting up spike tests?
-
-    // might get rid of this
-    /**
-     * 
-     * @param testPlanName
-     * @param httpSampler
-     * @param loopController
-     * @param threadGroup
-     * @return hashtree for use with StandardJMeterEngine
-     */
-    public HashTree createTestConfig(String testPlanName, LoopController loopController, SetupThreadGroup threadGroup) {
-        // init hashtree
-        HashTree jmConfig = new HashTree();
-        TestPlan testPlan = new TestPlan("testPlanName");
-
-        jmConfig.add("TestPlan", testPlan);
-        jmConfig.add("LoopController", loopController);
-        jmConfig.add("ThreadGroup", threadGroup);
-
-        return jmConfig;
-
-    }
-
 }
