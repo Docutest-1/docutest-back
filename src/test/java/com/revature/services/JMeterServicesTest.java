@@ -50,10 +50,10 @@ class JMeterServicesTest {
         jm = new JMeterServices();
         TestUtil.initFields();
 
-        engine = new StandardJMeterEngine();
-        JMeterUtils.loadJMeterProperties(JMeterPropPath);
-        // JMeterUtils.initLogging();
-        JMeterUtils.initLocale();
+//        engine = new StandardJMeterEngine();
+//        JMeterUtils.loadJMeterProperties(JMeterPropPath);
+//        // JMeterUtils.initLogging();
+//        JMeterUtils.initLocale();
     }
 
     @AfterEach
@@ -61,85 +61,8 @@ class JMeterServicesTest {
     }
 
     @Test
-    void testRun() {
-        HTTPSampler element = new HTTPSampler();
-
-        element.setProtocol(HTTPSampler.PROTOCOL_HTTP);
-        element.setDomain("google.com");
-        element.setPort(80);
-        element.setPath("/");
-        // http verb
-        element.setMethod("GET");
-        element.setUseKeepAlive(true);
-
-        LoopController lc = new LoopController();
-        lc.setLoops(5);
-        lc.addTestElement(element);
-        lc.setFirst(true);
-        lc.initialize();
-
-        SetupThreadGroup tg = jm.createLoad(lc, 50, 2, 2);
-
-        HashTree config = new HashTree();
-        config.add("testPlan", new TestPlan("test"));
-        config.add("loopController", lc);
-        config.add("setupThreadGroup", tg);
-        config.add("httpSampler", element);
-        Summariser summer = null;
-
-        String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
-        if (summariserName.length() > 0) {
-            summer = new Summariser(summariserName);
-        }
-        String logFile = "/temp/temp/file.jtl";
-        JMeterResponseCollector logger = new JMeterResponseCollector(summer);
-        logger.setFilename(logFile);
-        config.add(config.getArray()[0], logger);
-
-        engine.configure(config);
-        engine.run();
-
-//        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
-    }
-
-    @Test
-    void testSummary() {
-        HTTPSampler element = new HTTPSampler();
-
-        element.setProtocol(HTTPSampler.PROTOCOL_HTTP);
-        element.setDomain("google.com");
-        element.setPort(80);
-        element.setPath("/");
-        // http verb
-        element.setMethod("GET");
-        element.setUseKeepAlive(true);
-
-        LoopController lc = new LoopController();
-        lc.setLoops(5);
-        lc.addTestElement(element);
-        lc.setFirst(true);
-        lc.initialize();
-
-        SetupThreadGroup tg = jm.createLoad(lc, 50, 2, 2);
-
-        HashTree config = new HashTree();
-        config.add("testPlan", new TestPlan("test"));
-        config.add("loopController", lc);
-        config.add("setupThreadGroup", tg);
-        config.add("httpSampler", element);
-        Summariser summer = null;
-
-        String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
-        if (summariserName.length() > 0) {
-            summer = new Summariser(summariserName);
-        }
-        String logFile = "/temp/temp/file.jtl";
-        JMeterResponseCollector logger = new JMeterResponseCollector(summer);
-        logger.setFilename(logFile);
-        config.add(config.getArray()[0], logger);
-
-        engine.configure(config);
-        engine.run();
+    void testLoadTesting() {
+        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
     }
 
     @Test
@@ -168,9 +91,12 @@ class JMeterServicesTest {
     @Test
     void testCreateLoopController() {
         Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
-        LoopController testLC = (LoopController) jm.createLoopController(samplerSet, loadConfig.loops);
-        assertTrue(loadConfig.loops == testLC.getLoops());
-        // way to check loadconfig elements?
+        for (HTTPSampler element : samplerSet) {
+            LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.loops);
+            assertTrue(loadConfig.loops == testLC.getLoops());
+            // way to check loadconfig elements?
+        }
+
     }
 
     @Test
@@ -178,13 +104,10 @@ class JMeterServicesTest {
         assertTrue(null == jm.createLoopController(null, loadConfig.loops));
     }
 
-    @Test
-    void testCreateLoopControllerEmptySet() {
-        assertTrue(null == jm.createLoopController(new HashSet<HTTPSampler>(), loadConfig.loops));
-    }
 
     // ------------------ EXPLORATORY TESTS ------------------
 
+    @Disabled
     @Test
     void testRunNullLoopController() {
         Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
@@ -198,34 +121,41 @@ class JMeterServicesTest {
 
     }
 
+    @Disabled
     @Test
     void testRunNullThreadGroup() {
         Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
-        LoopController testLC = (LoopController) jm.createLoopController(samplerSet, loadConfig.loops);
+        for (HTTPSampler element : samplerSet) {
+            LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.loops);
 
-        SetupThreadGroup testThreadGroup = jm.createLoad(testLC, loadConfig.threads, loadConfig.rampUp,
-                loadConfig.duration);
-        HashTree testHashTree = jm.createTestConfig(loadConfig.testPlanName, testLC, null);
+            SetupThreadGroup testThreadGroup = jm.createLoad(testLC, loadConfig.threads, loadConfig.rampUp,
+                    loadConfig.duration);
+            HashTree testHashTree = jm.createTestConfig(loadConfig.testPlanName, testLC, null);
 
-        assertThrows(NullPointerException.class, () -> {
-            engine.configure(testHashTree);
-        });
-        engine.run();
-
+            assertThrows(NullPointerException.class, () -> {
+                engine.configure(testHashTree);
+            });
+            engine.run();
+        }
     }
 
+    @Disabled
     @Test
     void testRunMissingHTTPSamplers() {
         Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
-        LoopController testLC = (LoopController) jm.createLoopController(samplerSet, loadConfig.loops);
+        for (HTTPSampler element : samplerSet) {
+            LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.loops);
 
-        SetupThreadGroup testThreadGroup = jm.createLoad(testLC, loadConfig.threads, loadConfig.rampUp,
-                loadConfig.duration);
-        HashTree testHashTree = jm.createTestConfig(loadConfig.testPlanName, testLC, testThreadGroup);
-        engine.configure(testHashTree);
-        engine.run();
+            SetupThreadGroup testThreadGroup = jm.createLoad(testLC, loadConfig.threads, loadConfig.rampUp,
+                    loadConfig.duration);
+            HashTree testHashTree = jm.createTestConfig(loadConfig.testPlanName, testLC, testThreadGroup);
+            engine.configure(testHashTree);
+            engine.run();
+        }
+
     }
-
+    
+    @Disabled
     @Test
     void testRunNullHashTree() {
         assertThrows(NullPointerException.class, () -> {
