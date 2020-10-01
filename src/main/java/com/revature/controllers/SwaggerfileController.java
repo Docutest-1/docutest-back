@@ -41,13 +41,13 @@ public class SwaggerfileController {
     @PostMapping("/upload")
     public ResponseEntity<Void> uploadSwaggerFile(@RequestParam("file") MultipartFile file) throws IOException {
         System.out.println("Filename: " + file.getOriginalFilename() + "\n");
-        
         InputStream jsonStream = file.getInputStream();
         
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(jsonStream);
         
         Swagger swag = new SwaggerParser().read(node);
+        System.out.println(swag.getSwagger());
         
         for (Map.Entry<String, Path> entry : swag.getPaths().entrySet()) {
             System.out.println(entry.getKey());

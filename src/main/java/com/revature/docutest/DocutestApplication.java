@@ -10,5 +10,4 @@ public class DocutestApplication {
     public static void main(String[] args) {
         SpringApplication.run(DocutestApplication.class, args);
     }
-
 }
