@@ -36,6 +36,7 @@ public class JMeterServices {
      * Runs the JMeter test using a Swagger object 
      * @param swag Input Swagger object
      * @param testConfig LoadTestConfig object with test settings
+     * @param propertiesPath Filepath to the properties JMeter Properties file
      * @return True if test runs successfully, false if exception is thrown during the test.
      */
     public boolean loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
@@ -143,7 +144,7 @@ public class JMeterServices {
                     // http verb
                     element.setMethod(verb.toString());
 
-                    this.hashTree.add(element);
+                    this.hashTree.add("httpSampler", element);
                     httpSamplers.add(element);
                 }
             }
