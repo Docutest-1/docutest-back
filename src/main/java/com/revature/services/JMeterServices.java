@@ -14,6 +14,7 @@ import io.swagger.models.Swagger;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import org.apache.jmeter.control.LoopController;
+import org.apache.jmeter.control.RunTime;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
 import org.apache.jmeter.reporters.Summariser;
@@ -24,71 +25,67 @@ import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 import org.springframework.stereotype.Service;
 
-
 @Service
 public class JMeterServices {
 
     private HashTree hashTree = new HashTree();
 
     /**
-     * Runs the JMeter test using a Swagger object 
-     * @param swag Input Swagger object
-     * @param testConfig LoadTestConfig object with test settings
+     * Runs the JMeter test using a Swagger object, test configuration, and JMeter
+     * properties path.
+     * @param swag           Input Swagger object
+     * @param testConfig     LoadTestConfig object with test settings
      * @param propertiesPath File path to the properties JMeter Properties file
-     * @return True if test runs successfully, false if exception is thrown during the test.
      */
     public void loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
-
         JMeterUtils.loadJMeterProperties(propertiesPath);
-        //JMeterUtils.initLogging();
+        // JMeterUtils.initLogging();
         JMeterUtils.initLocale();
-
 
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
 
-        //TODO replace
-        int temp = 0;
         for (HTTPSampler element : httpSampler) {
-            TestElement loopCtrl = null;
-            if (testConfig.loops == 0) {
-                // TODO implement time duration
-            } else {
-                loopCtrl = this.createLoopController(element, testConfig.loops);
+            TestElement logicController = null;
 
-            }
+            logicController = createLoopController(element, testConfig.loops);
 
-            SetupThreadGroup threadGroup = this.createLoad((LoopController) loopCtrl, testConfig.threads, testConfig.rampUp,
-                    testConfig.duration);
+            SetupThreadGroup threadGroup = this.createLoad((LoopController) logicController, testConfig.threads,
+                    testConfig.rampUp);
 
             TestPlan testPlan = new TestPlan(testConfig.testPlanName);
+            testPlan.setProperty(TestElement.TEST_CLASS, TestPlan.class.getName());
 
             hashTree.add("testPlan", testPlan);
-            hashTree.add("loopCtrl", loopCtrl);
             hashTree.add("setupThreadGroup", threadGroup);
+            hashTree.add("httpSampler", element);
 
             jm.configure(hashTree);
-                
+
             Summariser summer = null;
             String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
             if (summariserName.length() > 0) {
                 summer = new Summariser(summariserName);
             }
             
-            String logFile = "/temp/temp/file" + temp + ".jtl"; 
-            temp++;
-            JMeterResponseCollector logger = new JMeterResponseCollector(summer);
+            // May need to change this if we want subdirectories for each user
+            String logFile = "./datafiles/run.csv";
+            JMeterResponseCollector logger;
+            if (testConfig.duration > 0) {
+                logger = new JMeterResponseCollector(summer, jm, testConfig.duration);
+            } else {
+                logger = new JMeterResponseCollector(summer);
+            }
             logger.setFilename(logFile);
             hashTree.add(hashTree.getArray()[0], logger);
-            
-            // ResultCollector class tracks results
-            
+
             try {
                 jm.run();
 
             } catch (Exception e) {
                 // TODO log
+                e.printStackTrace();
             }
         }
     }
@@ -136,22 +133,21 @@ public class JMeterServices {
                     } catch (IndexOutOfBoundsException e) {
                         return null;
                     }
-                    
+
                     // path
                     if (basePath.equals("/")) {
                         basePath = "";
                     }
                     String fullPath = basePath + path;
                     System.out.println("fullPath: " + fullPath);
-                    
+
                     String parsedURL = this.parseURL(fullPath, verbs);
                     System.out.println(parsedURL);
-                    
+
                     element.setPath(basePath + path);
                     // http verb
                     element.setMethod(verb.toString());
 
-                    this.hashTree.add("httpSampler", element);
                     httpSamplers.add(element);
                 }
             }
@@ -164,11 +160,12 @@ public class JMeterServices {
 
         return httpSamplers;
     }
-    
+
     /**
      * Parses URL and inserts path parameters if exists
+     * 
      * @param fullPath
-     * @param verbs : map containing HttpMethod and Operation pairs
+     * @param verbs    : map containing HttpMethod and Operation pairs
      * @return a URL containing inserted parameter
      */
     public String parseURL(String fullPath, Map<HttpMethod, Operation> verbs) {
@@ -183,28 +180,26 @@ public class JMeterServices {
                 }
             }
         }
-        
+
         return fullPath;
     }
-    
-    
+
     /**
-     * Adds each element in the HTTPSampler set as a test element to the loop
-     * controller. Returns null if httpSampler is null or has no elements.
-     * @param httpSamplers Set of httpsamplers to iterate add to the loop controller.
-     * @param n Number of iterations
-     * @return Array of LoopController objects based on the httpSamplers
+     * Configures a LoopController with the given loop count and httpSampler.
+     * Alternative to createRunTimeController. Returns null if httpSampler is null.
+     * 
+     * @param httpSampler HTTPSampler object representing a request
+     * @param loops       Number of iterations
+     * @return Covariant LoopController object.
      */
-    public TestElement createLoopController(HTTPSampler httpSampler, int n) {
-        TestElement loopCtrl = new LoopController();
-        
+    public TestElement createLoopController(HTTPSampler httpSampler, int loops) {
         if (httpSampler != null) {
-            ((LoopController) loopCtrl).setFirst(true);
-            ((LoopController) loopCtrl).setLoops(n);
+            TestElement loopCtrl = new LoopController();
+            // ((LoopController) loopCtrl).setFirst(true);
+            ((LoopController) loopCtrl).setLoops(loops);
             loopCtrl.addTestElement(httpSampler);
             return loopCtrl;
         }
-        
         return null;
     }
 
@@ -216,17 +211,16 @@ public class JMeterServices {
      * @param duration        in seconds
      * @return Configured thread group for ramp up test
      */
-    public SetupThreadGroup createLoad(LoopController loopController, int threads, int rampUp, int duration) {
-        if (loopController == null) {
+    public SetupThreadGroup createLoad(LoopController controller, int threads, int rampUp) {
+        if (controller == null) {
             return null;
         }
-        
+
         SetupThreadGroup ret = new SetupThreadGroup();
-        
+
         ret.setNumThreads(threads);
         ret.setRampUp(rampUp);
-        ret.setDuration(duration);
-        ret.setSamplerController(loopController); // needs to not be null
+        ret.setSamplerController(controller); // needs to not be null
 
         return ret;
     }
@@ -242,8 +236,7 @@ public class JMeterServices {
      * @param threadGroup
      * @return hashtree for use with StandardJMeterEngine
      */
-    public HashTree createTestConfig(String testPlanName, LoopController loopController,
-            SetupThreadGroup threadGroup) {
+    public HashTree createTestConfig(String testPlanName, LoopController loopController, SetupThreadGroup threadGroup) {
         // init hashtree
         HashTree jmConfig = new HashTree();
         TestPlan testPlan = new TestPlan("testPlanName");
