@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,6 +14,8 @@ import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
+import io.swagger.models.parameters.Parameter;
+import io.swagger.models.parameters.PathParameter;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
@@ -24,7 +27,9 @@ import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.SetupThreadGroup;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
+import org.springframework.stereotype.Service;
 
+@Service
 public class JMeterServices {
 
     // TODO REMOVE TEMP
@@ -125,9 +130,17 @@ public class JMeterServices {
                     } catch (IndexOutOfBoundsException e) {
                         return null;
                     }
+                    
                     // path
+                    if (basePath.equals("/")) {
+                        basePath = "";
+                    }
                     String fullPath = basePath + path;
-                    // TODO parse path for path var
+                    System.out.println("fullPath: " + fullPath);
+                    
+                    String parsedURL = this.parseURL(fullPath, verbs);
+                    System.out.println(parsedURL);
+                    
                     element.setPath(basePath + path);
                     // http verb
                     element.setMethod(verb.toString());
@@ -145,7 +158,30 @@ public class JMeterServices {
 
         return httpSamplers;
     }
-
+    
+    /**
+     * Parses URL and inserts path parameters if exists
+     * @param fullPath
+     * @param verbs : map containing HttpMethod and Operation pairs
+     * @return a URL containing inserted parameter
+     */
+    public String parseURL(String fullPath, Map<HttpMethod, Operation> verbs) {
+        for (Map.Entry<HttpMethod, Operation> entry : verbs.entrySet()) {
+            List<Parameter> parameters = entry.getValue().getParameters();
+            for (Parameter p : parameters) {
+                if (p.getIn().equals("path")) {
+                    PathParameter pathParam = (PathParameter) p;
+                    if (pathParam.getType().equals("integer")) {
+                        fullPath = fullPath.replace("{" + pathParam.getName() + "}", "1");
+                    }
+                }
+            }
+        }
+        
+        return fullPath;
+    }
+    
+    
     /**
      * Adds each element in the HTTPSampler set as a test element to the loop
      * controller. Returns null if httpSampler is null or has no elements.
