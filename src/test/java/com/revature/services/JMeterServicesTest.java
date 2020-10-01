@@ -8,6 +8,7 @@ import java.util.Set;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
+import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.SetupThreadGroup;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
@@ -48,8 +49,8 @@ class JMeterServicesTest {
         TestUtil.initFields();
         
         engine = new StandardJMeterEngine();
-        JMeterUtils.loadJMeterProperties("src/test/resources/test.properties");
-        JMeterUtils.initLogging();
+        JMeterUtils.loadJMeterProperties(JMeterPropPath);
+        //JMeterUtils.initLogging();
         JMeterUtils.initLocale();
     }
 
@@ -60,7 +61,34 @@ class JMeterServicesTest {
 
     @Test
     void testRun() {
-        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
+        HTTPSampler element = new HTTPSampler();
+        
+        element.setProtocol(HTTPSampler.PROTOCOL_HTTP);
+        element.setDomain("google.com");
+        element.setPort(80);
+        element.setPath("/");
+        // http verb
+        element.setMethod("GET");
+        element.setUseKeepAlive(true);
+        
+        LoopController lc = new LoopController();
+        lc.setLoops(-1);
+        lc.addTestElement(element);
+        lc.setFirst(true);
+        lc.initialize();
+        
+        SetupThreadGroup tg = jm.createLoad(lc, 50, 2, 2);
+
+        HashTree config = new HashTree();
+        config.add("testPlan", new TestPlan("test"));
+        config.add("loopController", lc);
+        config.add("setupThreadGroup",tg);
+        config.add("httpSampler", element);
+        
+        engine.configure(config);
+        engine.run();
+        
+//        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
     }
     
  
