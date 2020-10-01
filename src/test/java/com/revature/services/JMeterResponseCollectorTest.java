@@ -28,10 +28,12 @@ public class JMeterResponseCollectorTest {
     private SampleEvent event2;
     private SampleEvent event3;
     private SampleEvent event4;
+    private SampleEvent event5;
     private SampleResult event1Result;
     private SampleResult event2Result;
     private SampleResult event3Result;
     private SampleResult event4Result;
+    private SampleResult event5Result;
 
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
@@ -62,15 +64,20 @@ public class JMeterResponseCollectorTest {
         event2Result.setResponseCode("400");
         event2 = new SampleEvent(event2Result, "Sample Thread Group");
         
-        event3Result = SampleResult.createTestSample(400, 600);
-        event3Result.setLatency(200);
+        event3Result = SampleResult.createTestSample(400, 800);
+        event3Result.setLatency(400);
         event3Result.setResponseCode("400");
         event3 = new SampleEvent(event3Result, "Sample Thread Group");
         
-        event4Result = SampleResult.createTestSample(600, 900);
+        event4Result = SampleResult.createTestSample(800, 1100);
         event4Result.setLatency(300);
         event4Result.setResponseCode("400");
         event4 = new SampleEvent(event4Result, "Sample Thread Group");
+        
+        event5Result = SampleResult.createTestSample(1100, 1350);
+        event5Result.setLatency(250);
+        event5Result.setResponseCode("400");
+        event5 = new SampleEvent(event5Result, "Sample Thread Group");
         
 
     }
@@ -94,14 +101,12 @@ public class JMeterResponseCollectorTest {
     @Test
     void test200ResponseNoEvents() {
         int expected = 0;
-        jmrc.sampleOccurred(event1);
         assertEquals(expected, jmrc.getOkResponse());
     }
     
     @Test
     void test400ResponseNoEvents() {
         int expected = 0;
-        jmrc.sampleOccurred(event2);
         assertEquals(expected, jmrc.getFailCount());
     }
     
@@ -158,7 +163,8 @@ public class JMeterResponseCollectorTest {
     void testgetsuccessFailPercentage() {
         jmrc.sampleOccurred(event1);
         jmrc.sampleOccurred(event2);
-        long expected = (long) 0.5;
+        float expected = 0.5f;
+        System.out.println(jmrc.getsuccessFailPercentage());
         assertEquals(expected, jmrc.getsuccessFailPercentage());
     }
     
@@ -175,8 +181,36 @@ public class JMeterResponseCollectorTest {
         long expected = 20;
         jmrc.sampleOccurred(event1);
         jmrc.sampleOccurred(event2);
-        System.out.println(jmrc.getStartTime());
-        System.out.println(jmrc.getCurrentTime());
         assertEquals(expected, jmrc.getReqPerSec());
+    }
+    
+    @Test
+    void testgetResponse25percentile() {
+        long expected = 100;
+        jmrc.sampleOccurred(event1);
+        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(event3);
+        jmrc.sampleOccurred(event4);
+        assertEquals(expected, jmrc.getResponse25Percentile());
+    }
+    
+    @Test
+    void testgetResponse50percentile() {
+        long expected = 200;
+        jmrc.sampleOccurred(event1);
+        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(event3);
+        jmrc.sampleOccurred(event4);
+        assertEquals(expected, jmrc.getResponse50Percentile());
+    }
+    
+    @Test
+    void testgetResponse75percentile() {
+        long expected = 300;
+        jmrc.sampleOccurred(event1);
+        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(event3);
+        jmrc.sampleOccurred(event4);
+        assertEquals(expected, jmrc.getResponse75Percentile());
     }
 }

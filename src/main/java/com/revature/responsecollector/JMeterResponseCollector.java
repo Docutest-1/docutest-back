@@ -1,6 +1,5 @@
 package com.revature.responsecollector;
 
-import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -18,8 +17,8 @@ public class JMeterResponseCollector extends ResultCollector {
     private ArrayList<Long> latencyTimes = new ArrayList<Long>();
     private long responseMax = 0;
     
-    private long startTime = 0;
-    private long currentTime;
+    private long firstSampleStartTime = 0;
+    private long sampleStartTime;
     
     private StandardJMeterEngine engine;
     private int duration = -1;
@@ -39,10 +38,10 @@ public class JMeterResponseCollector extends ResultCollector {
     public void sampleOccurred(SampleEvent e) {
         super.sampleOccurred(e);
         SampleResult r = e.getResult();
-        if (startTime == 0) {
-            startTime = r.getStartTime();
+        if (firstSampleStartTime == 0) {
+            firstSampleStartTime = r.getStartTime();
         }
-        currentTime = r.getStartTime();
+        sampleStartTime = r.getStartTime();
         long latency = r.getLatency();
         latencyTimes.add(latency);
         if (latency > responseMax) {
@@ -54,18 +53,13 @@ public class JMeterResponseCollector extends ResultCollector {
         if (r.getResponseCode().charAt(0) == '2') {
             okResponse += 1;
         }
-        
-        if (duration > 0) {
-            if (currentTime - startTime > duration) {
-                engine.stopTest(false);
-            }
-        }
+
     }
     
     public float getsuccessFailPercentage() {
         float ratio = 0;
         if (latencyTimes.size() != 0) {
-            ratio = okResponse / latencyTimes.size();
+            ratio = ((float) okResponse) / latencyTimes.size();
         } 
         return ratio;
     }
@@ -83,29 +77,28 @@ public class JMeterResponseCollector extends ResultCollector {
     public long getResponse50Percentile() {
         Collections.sort(latencyTimes);
 
-        int middle = latencyTimes.size() / 2;
-        return latencyTimes.get(middle);
+        int middle = (int) Math.round(latencyTimes.size() * 0.5);
+        return latencyTimes.get(middle - 1);
     }
     
     public long getResponse25Percentile() {
         Collections.sort(latencyTimes);
 
-        int split = latencyTimes.size() / 4;
-        return latencyTimes.get(split);
+        int split = (int) Math.round(latencyTimes.size() * 0.25);
+        return latencyTimes.get(split - 1);
     }
     
     public long getResponse75Percentile() {
         Collections.sort(latencyTimes);
-
-        int split = latencyTimes.size() * 3 / 4;
-        return latencyTimes.get(split);
+        int split = (int) Math.round(latencyTimes.size() * 0.75);
+        return latencyTimes.get(split - 1);
     }
     
     public long getReqPerSec() {
-        long duration = (currentTime - startTime) / 1000;
+        long duration = sampleStartTime - firstSampleStartTime;
         long reqPerSec = 0;
         if (duration != 0) {
-            reqPerSec = latencyTimes.size() / duration;
+            reqPerSec = 1000 * latencyTimes.size() / duration;
         }
         return reqPerSec;
     }
@@ -137,13 +130,13 @@ public class JMeterResponseCollector extends ResultCollector {
 
 
     public long getStartTime() {
-        return startTime;
+        return firstSampleStartTime;
     }
 
 
 
     public long getCurrentTime() {
-        return currentTime;
+        return sampleStartTime;
     }
 
 
@@ -168,12 +161,12 @@ public class JMeterResponseCollector extends ResultCollector {
 
 
     public void setStartTime(long startTime) {
-        this.startTime = startTime;
+        this.firstSampleStartTime = startTime;
     }
 
 
     public void setCurrentTime(long currentTime) {
-        this.currentTime = currentTime;
+        this.sampleStartTime = currentTime;
     }
     
     

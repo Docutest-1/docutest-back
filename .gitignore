@@ -35,8 +35,11 @@ build/
 ### JAVA Gitignore ###
 .checkstyle
 bin/
-#log folder
+# log folder
 logs/
+
+# CSV file of results
+datafiles/*.csv
 
 # Compiled class file
 *.class

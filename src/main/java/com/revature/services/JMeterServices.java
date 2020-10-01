@@ -14,7 +14,6 @@ import io.swagger.models.Swagger;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import org.apache.jmeter.control.LoopController;
-import org.apache.jmeter.control.RunTime;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
 import org.apache.jmeter.reporters.Summariser;
@@ -28,30 +27,40 @@ import org.springframework.stereotype.Service;
 @Service
 public class JMeterServices {
 
+    // Object representing the config for the JMeter test
+    // At the very least, requires a TestPlan, HTTPSampler, and ThreadGroup
+    // Test Elements can be nested within each other
     private HashTree hashTree = new HashTree();
 
+    // replace user with username later
+    public static final String BASE_FILE_PATH = "./datafiles/user_";
+
+    private LoadTestConfig testConfig = new LoadTestConfig();
+
     /**
-     * Runs the JMeter test using a Swagger object, test configuration, and JMeter
-     * properties path.
+     * Runs the JMeter test using a Swagger object, test configuration, and JMeter properties path.
+     * If both duration and number of loops are set, duration takes precedence. If the Swagger file does not
+     * have any endpoints/HTTP methods, the threads still start up and run, but don't make any requests.
      * @param swag           Input Swagger object
      * @param testConfig     LoadTestConfig object with test settings
      * @param propertiesPath File path to the properties JMeter Properties file
      */
     public void loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
+        this.testConfig = testConfig;
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
         JMeterUtils.loadJMeterProperties(propertiesPath);
-        // JMeterUtils.initLogging();
         JMeterUtils.initLocale();
 
+        // create set of all unique HTTP requests as defined in swagger
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
 
-        // TODO replace
-        int temp = 0;
-        for (HTTPSampler element : httpSampler) {
-            TestElement logicController = null;
+        int reqNumber = 0;
 
-            logicController = createLoopController(element, testConfig.loops);
+        // run a separate load test for each req since we want individual CSV/summaries for each
+        for (HTTPSampler element : httpSampler) {
+            // use TestElement since we may not always want LoopController
+            TestElement logicController = createLoopController(element, testConfig.loops);
 
             SetupThreadGroup threadGroup = this.createLoad((LoopController) logicController, testConfig.threads,
                     testConfig.rampUp);
@@ -65,16 +74,22 @@ public class JMeterServices {
 
             jm.configure(hashTree);
 
+            // recording results of load test
             Summariser summer = null;
             String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
             if (summariserName.length() > 0) {
                 summer = new Summariser(summariserName);
             }
 
-            String logFile = "/temp/temp/file" + temp + ".csv";
-            temp++;
+            // Temporary file to be uploaded to S3
+            // Will need to change the filename if we want subdirectories for each user
+            // Definitely need to change if we want multiple users to run multiple tests at once
+            String logFile = BASE_FILE_PATH + reqNumber + ".csv";
+            reqNumber++;
             JMeterResponseCollector logger;
+
             if (testConfig.duration > 0) {
+                // need engine and duration for duration-based tests
                 logger = new JMeterResponseCollector(summer, jm, testConfig.duration);
             } else {
                 logger = new JMeterResponseCollector(summer);
@@ -84,6 +99,9 @@ public class JMeterServices {
 
             try {
                 jm.run();
+                hashTree.clear();
+
+                // TODO file upload to S3 here
 
             } catch (Exception e) {
                 // TODO log
@@ -102,8 +120,6 @@ public class JMeterServices {
      *         endpoints. Returns null if there is a problem with the Swagger input.
      */
     public Set<HTTPSampler> createHTTPSampler(Swagger input) {
-        // TODO test
-
         Set<HTTPSampler> httpSamplers = new HashSet<>();
 
         try {
@@ -131,6 +147,8 @@ public class JMeterServices {
                     try {
                         // port
                         element.setPort(Integer.parseInt(splitHost[1]));
+
+                    // couldn't parse port
                     } catch (NumberFormatException e) {
                         return null;
                     } catch (IndexOutOfBoundsException e) {
@@ -141,15 +159,12 @@ public class JMeterServices {
                     if (basePath.equals("/")) {
                         basePath = "";
                     }
+
                     String fullPath = basePath + path;
-                    System.out.println("fullPath: " + fullPath);
-
                     String parsedURL = this.parseURL(fullPath, verbs);
-                    System.out.println(parsedURL);
-
-                    element.setPath(basePath + path);
-                    // http verb
+                    element.setPath(parsedURL);
                     element.setMethod(verb.toString());
+                    element.setFollowRedirects(true);
 
                     httpSamplers.add(element);
                 }
@@ -157,7 +172,7 @@ public class JMeterServices {
         } catch (NullPointerException e) {
             // return empty set in case of missing params
             // TODO log
-
+            e.printStackTrace();
             return new HashSet<HTTPSampler>();
         }
 
@@ -166,7 +181,6 @@ public class JMeterServices {
 
     /**
      * Parses URL and inserts path parameters if exists
-     *
      * @param fullPath
      * @param verbs    : map containing HttpMethod and Operation pairs
      * @return a URL containing inserted parameter
@@ -178,6 +192,8 @@ public class JMeterServices {
                 if (p.getIn().equals("path")) {
                     PathParameter pathParam = (PathParameter) p;
                     if (pathParam.getType().equals("integer")) {
+                        // TODO Full implementation
+                        // currently replaced params with 1
                         fullPath = fullPath.replace("{" + pathParam.getName() + "}", "1");
                     }
                 }
@@ -190,7 +206,6 @@ public class JMeterServices {
     /**
      * Configures a LoopController with the given loop count and httpSampler.
      * Alternative to createRunTimeController. Returns null if httpSampler is null.
-     *
      * @param httpSampler HTTPSampler object representing a request
      * @param loops       Number of iterations
      * @return Covariant LoopController object.
@@ -198,7 +213,6 @@ public class JMeterServices {
     public TestElement createLoopController(HTTPSampler httpSampler, int loops) {
         if (httpSampler != null) {
             TestElement loopCtrl = new LoopController();
-            // ((LoopController) loopCtrl).setFirst(true);
             ((LoopController) loopCtrl).setLoops(loops);
             loopCtrl.addTestElement(httpSampler);
             return loopCtrl;
@@ -207,7 +221,7 @@ public class JMeterServices {
     }
 
     /**
-     *
+     * Creates a thread group (specifically a SetupThreadGroup object) with the given parameters.
      * @param loopControllers for thread group
      * @param nThreads        Number of threads.
      * @param rampUp          Ramp up time in seconds.
@@ -221,35 +235,14 @@ public class JMeterServices {
 
         SetupThreadGroup ret = new SetupThreadGroup();
 
+        if (testConfig.duration > 0) {
+            ret.setScheduler(true);
+            ret.setDuration(testConfig.duration);
+        }
         ret.setNumThreads(threads);
         ret.setRampUp(rampUp);
         ret.setSamplerController(controller); // needs to not be null
 
         return ret;
     }
-
-    // May want a separate method for setting up spike tests?
-
-    // might get rid of this
-    /**
-     *
-     * @param testPlanName
-     * @param httpSampler
-     * @param loopController
-     * @param threadGroup
-     * @return hashtree for use with StandardJMeterEngine
-     */
-    public HashTree createTestConfig(String testPlanName, LoopController loopController, SetupThreadGroup threadGroup) {
-        // init hashtree
-        HashTree jmConfig = new HashTree();
-        TestPlan testPlan = new TestPlan("testPlanName");
-
-        jmConfig.add("TestPlan", testPlan);
-        jmConfig.add("LoopController", loopController);
-        jmConfig.add("ThreadGroup", threadGroup);
-
-        return jmConfig;
-
-    }
-
 }
