@@ -83,29 +83,28 @@ public class JMeterResponseCollector extends ResultCollector {
     public long getResponse50Percentile() {
         Collections.sort(latencyTimes);
 
-        int middle = latencyTimes.size() / 2;
-        return latencyTimes.get(middle);
+        int middle = (int) Math.round(latencyTimes.size() * 0.5);
+        return latencyTimes.get(middle - 1);
     }
     
     public long getResponse25Percentile() {
         Collections.sort(latencyTimes);
 
-        int split = latencyTimes.size() / 4;
-        return latencyTimes.get(split);
+        int split = (int) Math.round(latencyTimes.size() * 0.25);
+        return latencyTimes.get(split - 1);
     }
     
     public long getResponse75Percentile() {
         Collections.sort(latencyTimes);
-
-        int split = latencyTimes.size() * 3 / 4;
-        return latencyTimes.get(split);
+        int split = (int) Math.round(latencyTimes.size() * 0.75);
+        return latencyTimes.get(split - 1);
     }
     
     public long getReqPerSec() {
-        long duration = (currentTime - startTime) / 1000;
+        long duration = currentTime - startTime;
         long reqPerSec = 0;
         if (duration != 0) {
-            reqPerSec = latencyTimes.size() / duration;
+            reqPerSec = 1000 * latencyTimes.size() / duration;
         }
         return reqPerSec;
     }
