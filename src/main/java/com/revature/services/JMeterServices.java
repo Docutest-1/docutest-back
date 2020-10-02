@@ -89,6 +89,7 @@ public class JMeterServices {
 
             try {
                 jm.run();
+                hashTree.clear();
             } catch (Exception e) {
                 // TODO log
                 e.printStackTrace();
