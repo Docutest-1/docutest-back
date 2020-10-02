@@ -1,5 +1,6 @@
 package com.revature.services;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -8,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.jmeter.control.LoopController;
@@ -20,6 +22,11 @@ import org.junit.jupiter.api.Test;
 
 import com.revature.docutest.TestUtil;
 import com.revature.templates.LoadTestConfig;
+
+import io.swagger.models.HttpMethod;
+import io.swagger.models.Operation;
+import io.swagger.models.Path;
+import io.swagger.models.Swagger;
 
 class JMeterServicesTest {
 
@@ -46,7 +53,7 @@ class JMeterServicesTest {
 
         jm = new JMeterServices();
         TestUtil.initFields();
-        
+
         File logFile = new File(CSV_FILE_PATH);
         logFile.delete();
 
@@ -60,15 +67,15 @@ class JMeterServicesTest {
     void testLoadTestingLoop() {
         loadConfig.loops = 2;
         jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
-        
+
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             int counter = 0;
             int expectedReq = (loadConfig.loops * loadConfig.threads);
-            
+
             while (reader.readLine() != null) {
                 counter++;
             }
-            counter--; // decrement for header line 
+            counter--; // decrement for header line
             System.out.println("Expected Request Count: " + expectedReq);
             System.out.println("Actual Request Count: " + counter);
             assertTrue(counter == expectedReq);
@@ -77,20 +84,20 @@ class JMeterServicesTest {
             fail();
         }
     }
-    
+
     @Test
     void testLoadTestingLoopMultiReq() {
         loadConfig.loops = 2;
         jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
-        
+
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             int counter = 0;
             int expectedReq = (loadConfig.loops * loadConfig.threads) * 2; // number of distinct req
-            
+
             while (reader.readLine() != null) {
                 counter++;
             }
-            counter--; // decrement for header line 
+            counter--; // decrement for header line
             System.out.println("Expected Request Count: " + expectedReq);
             System.out.println("Actual Request Count: " + counter);
             assertTrue(counter == expectedReq);
@@ -104,7 +111,7 @@ class JMeterServicesTest {
     void testLoadTestingDuration() throws IOException {
         loadConfig.duration = 3;
         loadConfig.loops = -1;
-        
+
         jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
@@ -124,21 +131,21 @@ class JMeterServicesTest {
                 counter++;
             }
             long diff = Long.parseLong(row[0]) - startTime;
-            
-            System.out.println("Difference between expected and actual duration (ms): " 
-                    + Math.abs((loadConfig.duration*1000)-diff));
-            assertTrue(Math.abs((loadConfig.duration*1000)-diff) < 500);
+
+            System.out.println("Difference between expected and actual duration (ms): "
+                    + Math.abs((loadConfig.duration * 1000) - diff));
+            assertTrue(Math.abs((loadConfig.duration * 1000) - diff) < 500);
         } catch (IOException e) {
             e.printStackTrace();
             fail();
         }
     }
-    
+
     @Test
     void testLoadTestingDurationMulti() {
         loadConfig.duration = 3;
         loadConfig.loops = -1;
-        
+
         jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
@@ -158,10 +165,10 @@ class JMeterServicesTest {
                 counter++;
             }
             long diff = Long.parseLong(row[0]) - startTime;
-            
-            System.out.println("Difference between expected and actual duration (ms): " 
-                    + Math.abs((loadConfig.duration*1000)-diff));
-            assertTrue(Math.abs((loadConfig.duration*1000)-diff) < 500);
+
+            System.out.println("Difference between expected and actual duration (ms): "
+                    + Math.abs((loadConfig.duration * 1000) - diff));
+            assertTrue(Math.abs((loadConfig.duration * 1000) - diff) < 500);
         } catch (IOException e) {
             e.printStackTrace();
             fail();
@@ -175,7 +182,7 @@ class JMeterServicesTest {
         samplers = jm.createHTTPSampler(TestUtil.todos);
         assertTrue(7 == samplers.size());
     }
-    
+
     @Test
     void testHttpSamplerEndpoints() {
         // get.json
@@ -185,15 +192,14 @@ class JMeterServicesTest {
         for (HTTPSampler sampler : samplers) {
             assertTrue(expected.contains(sampler.getPath()));
         }
-        
-        
+
         // todos.json
         expected.clear();
         expected.add("/todos");
         expected.add("/todos/truncate");
         expected.add("/todos/1"); // needs to be changed once path var is implemented
         samplers = jm.createHTTPSampler(TestUtil.todos);
-        
+
         for (HTTPSampler sampler : samplers) {
             assertTrue(expected.contains(sampler.getPath()));
         }
@@ -228,5 +234,31 @@ class JMeterServicesTest {
     @Test
     void testCreateLoopControllerNull() {
         assertTrue(null == jm.createLoopController(null, loadConfig.loops));
+    }
+
+    @Test
+    void testParseURL() {
+        String expected = "/todos/1";
+
+        Swagger swag = TestUtil.todos;
+        String basePath = swag.getBasePath();
+        Map<String, Path> endpoints = swag.getPaths();
+        for (String path : endpoints.keySet()) {
+            Path pathOperations = endpoints.get(path);
+            Map<HttpMethod, Operation> verbs = pathOperations.getOperationMap();
+            for (HttpMethod verb : verbs.keySet()) {
+                if (basePath.equals("/")) {
+                    basePath = "";
+                }
+                String fullPath = basePath + path;
+
+                String parsedURL = jm.parseURL(fullPath, verbs);
+
+                // Assertion here
+                if (fullPath.equals("/todos/{id}")) {
+                    assertEquals(expected, parsedURL);
+                }
+            }
+        }
     }
 }
