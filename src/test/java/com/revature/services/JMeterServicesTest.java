@@ -1,5 +1,6 @@
 package com.revature.services;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -9,6 +10,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.jmeter.control.LoopController;
@@ -25,6 +27,11 @@ import org.junit.jupiter.api.Test;
 
 import com.revature.docutest.TestUtil;
 import com.revature.templates.LoadTestConfig;
+
+import io.swagger.models.HttpMethod;
+import io.swagger.models.Operation;
+import io.swagger.models.Path;
+import io.swagger.models.Swagger;
 
 class JMeterServicesTest {
 
@@ -157,5 +164,31 @@ class JMeterServicesTest {
     @Test
     void testCreateLoopControllerNull() {
         assertTrue(null == jm.createLoopController(null, loadConfig.loops));
+    }
+    
+    @Test
+    void testParseURL() {
+        String expected = "/todos/1";
+
+        Swagger swag = TestUtil.todos;
+        String basePath = swag.getBasePath();
+        Map<String, Path> endpoints = swag.getPaths();
+        for (String path : endpoints.keySet()) {
+            Path pathOperations = endpoints.get(path);
+            Map<HttpMethod, Operation> verbs = pathOperations.getOperationMap();
+            for (HttpMethod verb : verbs.keySet()) {
+                if (basePath.equals("/")) {
+                    basePath = "";
+                }
+                String fullPath = basePath + path;
+                
+                String parsedURL = jm.parseURL(fullPath, verbs);
+                
+                // Assertion here
+                if (fullPath.equals("/todos/{id}")) {
+                    assertEquals(expected, parsedURL);
+                }
+            }
+        }
     }
 }

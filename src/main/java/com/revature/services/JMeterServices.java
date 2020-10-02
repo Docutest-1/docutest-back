@@ -138,12 +138,10 @@ public class JMeterServices {
                         basePath = "";
                     }
                     String fullPath = basePath + path;
-                    System.out.println("fullPath: " + fullPath);
-
+                    
                     String parsedURL = this.parseURL(fullPath, verbs);
-                    System.out.println(parsedURL);
 
-                    element.setPath(basePath + path);
+                    element.setPath(parsedURL);
                     // http verb
                     element.setMethod(verb.toString());
 
