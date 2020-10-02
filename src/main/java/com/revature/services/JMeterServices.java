@@ -233,7 +233,11 @@ public class JMeterServices {
         }
 
         SetupThreadGroup ret = new SetupThreadGroup();
-
+        
+        if (testConfig.duration > 0) {
+            ret.setScheduler(true);
+            ret.setDuration(testConfig.duration);
+        }
         ret.setNumThreads(threads);
         ret.setRampUp(rampUp);
         ret.setSamplerController(controller); // needs to not be null

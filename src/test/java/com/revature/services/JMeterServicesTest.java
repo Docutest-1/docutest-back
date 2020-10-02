@@ -144,7 +144,7 @@ class JMeterServicesTest {
 
             System.out.println("Difference between expected and actual duration (ms): "
                     + Math.abs((loadConfig.duration * 1000) - diff));
-            assertTrue(Math.abs((loadConfig.duration * 1000) - diff) < 1000);
+            assertTrue(Math.abs((loadConfig.duration * 1000) - diff) < 1500);
         } catch (IOException e) {
             e.printStackTrace();
             fail();
@@ -180,7 +180,7 @@ class JMeterServicesTest {
                 long expectedDuration = loadConfig.duration*1000;
                 System.out.println("Difference between expected and actual duration (ms): " 
                         + Math.abs(expectedDuration-diff));
-                assertTrue(Math.abs((expectedDuration)-diff) < (1000)); 
+                assertTrue(Math.abs((expectedDuration)-diff) < (1500)); 
             } catch (IOException e) {
                 e.printStackTrace();
                 fail();

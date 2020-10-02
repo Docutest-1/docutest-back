@@ -58,16 +58,16 @@ public class JMeterResponseCollector extends ResultCollector {
             okResponse += 1;
         }
 
-        if (duration > 0) {
-            if (System.currentTimeMillis() - firstSampleStartTime > duration) {
-                Date dateObj = new Date(System.currentTimeMillis());
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
-                System.out.println("Current time: " + sdf.format(dateObj));
-                dateObj = new Date(firstSampleStartTime);
-                System.out.println("first sample start time: " + sdf.format(dateObj));
-                engine.stopTest(false);
-            }
-        }
+//        if (duration > 0) {
+//            if (System.currentTimeMillis() - firstSampleStartTime > duration) {
+//                Date dateObj = new Date(System.currentTimeMillis());
+//                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+//                System.out.println("Current time: " + sdf.format(dateObj));
+//                dateObj = new Date(firstSampleStartTime);
+//                System.out.println("first sample start time: " + sdf.format(dateObj));
+//                engine.stopTest(false);
+//            }
+//        }
 
     }
     
