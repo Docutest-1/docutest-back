@@ -14,7 +14,6 @@ import io.swagger.models.Swagger;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import org.apache.jmeter.control.LoopController;
-import org.apache.jmeter.control.RunTime;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
 import org.apache.jmeter.reporters.Summariser;
@@ -28,16 +27,23 @@ import org.springframework.stereotype.Service;
 @Service
 public class JMeterServices {
 
+    // Object representing the config for the JMeter test
+    // At the very least, requires a TestPlan, HTTPSamplerm and ThreadGroup
+    // Test Elements can be nested within each other
     private HashTree hashTree = new HashTree();
+    
+    private LoadTestConfig testConfig;
 
     /**
      * Runs the JMeter test using a Swagger object, test configuration, and JMeter properties path.
-     * If both duration and number of loops are set, duration takes precedence.
+     * If both duration and number of loops are set, duration takes precedence. If the Swagger file does not
+     * have any endpoints/HTTP methods, the threads still start up and run, but don't make any requests.
      * @param swag           Input Swagger object
      * @param testConfig     LoadTestConfig object with test settings
      * @param propertiesPath File path to the properties JMeter Properties file
      */
     public void loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
+        this.testConfig = testConfig;
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
         JMeterUtils.loadJMeterProperties(propertiesPath);
@@ -55,7 +61,7 @@ public class JMeterServices {
 
             TestPlan testPlan = new TestPlan(testConfig.testPlanName);
             testPlan.setProperty(TestElement.TEST_CLASS, TestPlan.class.getName());
-
+            
             hashTree.add("testPlan", testPlan);
             hashTree.add("setupThreadGroup", threadGroup);
             hashTree.add("httpSampler", element);
@@ -68,7 +74,8 @@ public class JMeterServices {
                 summer = new Summariser(summariserName);
             }
             
-            // May need to change this if we want subdirectories for each user
+            // Temporary file to be uploaded to S3
+            // Will need to change the filename if we want subdirectories for each user
             // Definitely need to change if we want multiple users to run multiple tests at once
             String logFile = "./datafiles/run.csv";
             JMeterResponseCollector logger;
@@ -99,7 +106,6 @@ public class JMeterServices {
      *         endpoints. Returns null if there is a problem with the Swagger input.
      */
     public Set<HTTPSampler> createHTTPSampler(Swagger input) {
-        // TODO test
         Set<HTTPSampler> httpSamplers = new HashSet<>();
 
         try {
@@ -137,15 +143,13 @@ public class JMeterServices {
                     if (basePath.equals("/")) {
                         basePath = "";
                     }
+                    
                     String fullPath = basePath + path;
-                    System.out.println("fullPath: " + fullPath);
-
                     String parsedURL = this.parseURL(fullPath, verbs);
-                    System.out.println(parsedURL);
-
-                    element.setPath(basePath + path);
-                    // http verb
+                    element.setPath(parsedURL);
                     element.setMethod(verb.toString());
+                    boolean keepAlive = (testConfig.duration > 0) ? true : false;
+                    element.setUseKeepAlive(keepAlive);
 
                     httpSamplers.add(element);
                 }
@@ -162,7 +166,6 @@ public class JMeterServices {
 
     /**
      * Parses URL and inserts path parameters if exists
-     * 
      * @param fullPath
      * @param verbs    : map containing HttpMethod and Operation pairs
      * @return a URL containing inserted parameter
@@ -174,6 +177,8 @@ public class JMeterServices {
                 if (p.getIn().equals("path")) {
                     PathParameter pathParam = (PathParameter) p;
                     if (pathParam.getType().equals("integer")) {
+                        // TODO Full implementation
+                        // currently replaced params with 1
                         fullPath = fullPath.replace("{" + pathParam.getName() + "}", "1");
                     }
                 }
@@ -193,7 +198,6 @@ public class JMeterServices {
     public TestElement createLoopController(HTTPSampler httpSampler, int loops) {
         if (httpSampler != null) {
             TestElement loopCtrl = new LoopController();
-            // ((LoopController) loopCtrl).setFirst(true);
             ((LoopController) loopCtrl).setLoops(loops);
             loopCtrl.addTestElement(httpSampler);
             return loopCtrl;

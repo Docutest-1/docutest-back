@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Simple GET Json from Google",
+        "description": "Simple Json from Google",
         "version": "1.0",
         "title": "Get Example",
         "contact": {}
@@ -16,6 +16,15 @@
                 "responses": {
                     "200": {
                         "description": "status code 200"
+                    }
+                }
+            }
+        },
+        "/teapot" : {
+            "get" : {
+                "responses" : {
+                    "418" : {
+                        "description" : "teapot!"
                     }
                 }
             }
