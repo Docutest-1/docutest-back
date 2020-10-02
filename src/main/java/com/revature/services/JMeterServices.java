@@ -1,9 +1,7 @@
 package com.revature.services;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,22 +11,22 @@ import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
+import io.swagger.models.parameters.Parameter;
+import io.swagger.models.parameters.PathParameter;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
-import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.reporters.Summariser;
-import org.apache.jmeter.save.SaveService;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.SetupThreadGroup;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
+import org.springframework.stereotype.Service;
 
+
+@Service
 public class JMeterServices {
-
-    // TODO REMOVE TEMP
-    public static final int TEMP_DURATION = 10;
 
     private HashTree hashTree = new HashTree();
 
@@ -36,61 +34,62 @@ public class JMeterServices {
      * Runs the JMeter test using a Swagger object 
      * @param swag Input Swagger object
      * @param testConfig LoadTestConfig object with test settings
-     * @param propertiesPath Filepath to the properties JMeter Properties file
+     * @param propertiesPath File path to the properties JMeter Properties file
      * @return True if test runs successfully, false if exception is thrown during the test.
      */
-    public boolean loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
+    public void loadTesting(Swagger swag, LoadTestConfig testConfig, String propertiesPath) {
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
 
         JMeterUtils.loadJMeterProperties(propertiesPath);
-        JMeterUtils.initLogging();
+        //JMeterUtils.initLogging();
         JMeterUtils.initLocale();
 
 
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
 
-        TestElement loopCtrl = null;
-        if (testConfig.loops == 0) {
-            // TODO implement time duration
-        } else {
-            loopCtrl = this.createLoopController(httpSampler, testConfig.loops);
+        //TODO replace
+        int temp = 0;
+        for (HTTPSampler element : httpSampler) {
+            TestElement loopCtrl = null;
+            if (testConfig.loops == 0) {
+                // TODO implement time duration
+            } else {
+                loopCtrl = this.createLoopController(element, testConfig.loops);
 
-        }
+            }
 
-        SetupThreadGroup threadGroup = this.createLoad((LoopController) loopCtrl, testConfig.threads, testConfig.rampUp,
-                testConfig.duration);
+            SetupThreadGroup threadGroup = this.createLoad((LoopController) loopCtrl, testConfig.threads, testConfig.rampUp,
+                    testConfig.duration);
 
-        TestPlan testPlan = new TestPlan(testConfig.testPlanName);
+            TestPlan testPlan = new TestPlan(testConfig.testPlanName);
 
-        hashTree.add("testPlan", testPlan);
-        hashTree.add("loopCtrl", loopCtrl);
-        hashTree.add("threadGroup", threadGroup);
+            hashTree.add("testPlan", testPlan);
+            hashTree.add("loopCtrl", loopCtrl);
+            hashTree.add("setupThreadGroup", threadGroup);
 
-        jm.configure(hashTree);
+            jm.configure(hashTree);
+                
+            Summariser summer = null;
+            String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
+            if (summariserName.length() > 0) {
+                summer = new Summariser(summariserName);
+            }
             
-        Summariser summer = null;
-        String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
-        if (summariserName.length() > 0) {
-            summer = new Summariser(summariserName);
-        }
-        
-        String logFile = "/temp/temp/file.jtl";
-        JMeterResponseCollector logger = new JMeterResponseCollector(summer);
-        logger.setFilename(logFile);
-        hashTree.add(hashTree.getArray()[0], logger);
-        
+            String logFile = "/temp/temp/file" + temp + ".jtl"; 
+            temp++;
+            JMeterResponseCollector logger = new JMeterResponseCollector(summer);
+            logger.setFilename(logFile);
+            hashTree.add(hashTree.getArray()[0], logger);
+            
+            // ResultCollector class tracks results
+            
+            try {
+                jm.run();
 
-
-        // ResultCollector class tracks results
-        
-        try {
-            jm.run();
-            return true;
-        } catch (Exception e) {
-            // TODO log
-            // 
-            return false;
+            } catch (Exception e) {
+                // TODO log
+            }
         }
     }
 
@@ -137,9 +136,17 @@ public class JMeterServices {
                     } catch (IndexOutOfBoundsException e) {
                         return null;
                     }
+                    
                     // path
+                    if (basePath.equals("/")) {
+                        basePath = "";
+                    }
                     String fullPath = basePath + path;
-                    // TODO parse path for path var
+                    System.out.println("fullPath: " + fullPath);
+                    
+                    String parsedURL = this.parseURL(fullPath, verbs);
+                    System.out.println(parsedURL);
+                    
                     element.setPath(basePath + path);
                     // http verb
                     element.setMethod(verb.toString());
@@ -157,7 +164,30 @@ public class JMeterServices {
 
         return httpSamplers;
     }
-
+    
+    /**
+     * Parses URL and inserts path parameters if exists
+     * @param fullPath
+     * @param verbs : map containing HttpMethod and Operation pairs
+     * @return a URL containing inserted parameter
+     */
+    public String parseURL(String fullPath, Map<HttpMethod, Operation> verbs) {
+        for (Map.Entry<HttpMethod, Operation> entry : verbs.entrySet()) {
+            List<Parameter> parameters = entry.getValue().getParameters();
+            for (Parameter p : parameters) {
+                if (p.getIn().equals("path")) {
+                    PathParameter pathParam = (PathParameter) p;
+                    if (pathParam.getType().equals("integer")) {
+                        fullPath = fullPath.replace("{" + pathParam.getName() + "}", "1");
+                    }
+                }
+            }
+        }
+        
+        return fullPath;
+    }
+    
+    
     /**
      * Adds each element in the HTTPSampler set as a test element to the loop
      * controller. Returns null if httpSampler is null or has no elements.
@@ -165,17 +195,13 @@ public class JMeterServices {
      * @param n Number of iterations
      * @return Array of LoopController objects based on the httpSamplers
      */
-    public TestElement createLoopController(Set<HTTPSampler> httpSampler, int n) {
+    public TestElement createLoopController(HTTPSampler httpSampler, int n) {
         TestElement loopCtrl = new LoopController();
         
-        if (httpSampler != null && httpSampler.size() > 0) {
+        if (httpSampler != null) {
             ((LoopController) loopCtrl).setFirst(true);
             ((LoopController) loopCtrl).setLoops(n);
-
-            for (HTTPSampler element : httpSampler) {
-                loopCtrl.addTestElement(element);
-            }
-
+            loopCtrl.addTestElement(httpSampler);
             return loopCtrl;
         }
         

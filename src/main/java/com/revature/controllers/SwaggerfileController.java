@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.revature.services.JMeterServices;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Model;
 import io.swagger.models.Operation;
@@ -18,6 +19,8 @@ import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import io.swagger.models.properties.Property;
 import io.swagger.parser.SwaggerParser;
+import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -31,6 +34,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Controller
 public class SwaggerfileController {
 
+    @Autowired
+    private JMeterServices jms;
+    
     @GetMapping("/test")
     public ResponseEntity<Void> test() {
         System.out.println("Hello world!");
@@ -49,10 +55,12 @@ public class SwaggerfileController {
         
         Swagger swag = new SwaggerParser().read(node);
         
-        for (Map.Entry<String, Path> entry : swag.getPaths().entrySet()) {
-            System.out.println(entry.getKey());
-            printOperations(swag, entry.getValue().getOperationMap());
-        }
+        this.jms.createHTTPSampler(swag);
+        
+//        for (Map.Entry<String, Path> entry : swag.getPaths().entrySet()) {
+//            System.out.println(entry.getKey());
+//            printOperations(swag, entry.getValue().getOperationMap());
+//        }
         
         return ResponseEntity.ok().build();
     }
