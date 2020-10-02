@@ -149,8 +149,6 @@ public class JMeterServices {
                     String parsedURL = this.parseURL(fullPath, verbs);
                     element.setPath(parsedURL);
                     element.setMethod(verb.toString());
-                    boolean keepAlive = (testConfig.duration > 0) ? true : false;
-                    element.setUseKeepAlive(keepAlive);
 
                     httpSamplers.add(element);
                 }
@@ -158,7 +156,7 @@ public class JMeterServices {
         } catch (NullPointerException e) {
             // return empty set in case of missing params
             // TODO log
-
+            e.printStackTrace();
             return new HashSet<HTTPSampler>();
         }
 

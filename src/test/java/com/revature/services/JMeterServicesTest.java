@@ -159,9 +159,10 @@ class JMeterServicesTest {
             }
             long diff = Long.parseLong(row[0]) - startTime;
             
+            long expectedDuration = loadConfig.duration*1000 * 2; // remove *2 once we implement file upload/delete to S3
             System.out.println("Difference between expected and actual duration (ms): " 
-                    + Math.abs((loadConfig.duration*1000)-diff));
-            assertTrue(Math.abs((loadConfig.duration*1000)-diff) < 500);
+                    + Math.abs(expectedDuration-diff));
+            assertTrue(Math.abs((expectedDuration)-diff) < (500*2)); // remove *2 once we implement file upload/delete to S3
         } catch (IOException e) {
             e.printStackTrace();
             fail();
