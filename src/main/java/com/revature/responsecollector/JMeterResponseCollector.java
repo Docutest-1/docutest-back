@@ -56,7 +56,7 @@ public class JMeterResponseCollector extends ResultCollector {
         
         if (duration > 0) {
             if (currentTime - startTime > duration) {
-                engine.stopTest(false);
+                engine.stopTest(true);
             }
         }
     }
