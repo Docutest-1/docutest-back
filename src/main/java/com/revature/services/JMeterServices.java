@@ -32,6 +32,9 @@ public class JMeterServices {
     // Test Elements can be nested within each other
     private HashTree hashTree = new HashTree();
     
+    // replace user with username later
+    public static final String BASE_FILE_PATH = "./datafiles/user_";
+    
     private LoadTestConfig testConfig;
 
     /**
@@ -51,6 +54,8 @@ public class JMeterServices {
         
         // create set of all unique HTTP requests as defined in swagger
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
+        
+        int reqNumber = 0;
         
         // run a separate load test for each req since we want individual CSV/summaries for each
         for (HTTPSampler element : httpSampler) {
@@ -79,7 +84,8 @@ public class JMeterServices {
             // Temporary file to be uploaded to S3
             // Will need to change the filename if we want subdirectories for each user
             // Definitely need to change if we want multiple users to run multiple tests at once
-            String logFile = "./datafiles/run.csv";
+            String logFile = BASE_FILE_PATH + reqNumber + ".csv";
+            reqNumber++;
             JMeterResponseCollector logger;
             
             if (testConfig.duration > 0) {

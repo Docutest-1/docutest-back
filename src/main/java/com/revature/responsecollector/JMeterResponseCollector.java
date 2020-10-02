@@ -1,7 +1,11 @@
 package com.revature.responsecollector;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.reporters.ResultCollector;
@@ -53,12 +57,18 @@ public class JMeterResponseCollector extends ResultCollector {
         if (r.getResponseCode().charAt(0) == '2') {
             okResponse += 1;
         }
-        
+
         if (duration > 0) {
             if (System.currentTimeMillis() - firstSampleStartTime > duration) {
+                Date dateObj = new Date(System.currentTimeMillis());
+                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+                System.out.println("Current time: " + sdf.format(dateObj));
+                dateObj = new Date(firstSampleStartTime);
+                System.out.println("first sample start time: " + sdf.format(dateObj));
                 engine.stopTest(false);
             }
         }
+
     }
     
     public float getsuccessFailPercentage() {

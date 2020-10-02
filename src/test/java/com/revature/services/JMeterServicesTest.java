@@ -33,7 +33,8 @@ class JMeterServicesTest {
     private JMeterServices jm;
     private LoadTestConfig loadConfig = new LoadTestConfig();
     private static final String JMeterPropPath = "src/test/resources/test.properties";
-    private static final String CSV_FILE_PATH = "./datafiles/run.csv";
+    private static final String CSV_FILE_PATH = "./datafiles/user_0.csv";
+    public static final String DIRECTORY_PATH = "./datafiles";
 
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
@@ -54,9 +55,11 @@ class JMeterServicesTest {
         jm = new JMeterServices();
         TestUtil.initFields();
 
-        File logFile = new File(CSV_FILE_PATH);
-        logFile.delete();
+//        File logFile = new File(CSV_FILE_PATH);
+//        logFile.delete();
 
+        File directory = new File(DIRECTORY_PATH);
+        deleteFolder(directory);
     }
 
     @AfterEach
@@ -67,7 +70,7 @@ class JMeterServicesTest {
     void testLoadTestingLoop() {
         loadConfig.loops = 2;
         jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
-
+        
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             int counter = 0;
             int expectedReq = (loadConfig.loops * loadConfig.threads);
@@ -89,24 +92,29 @@ class JMeterServicesTest {
     void testLoadTestingLoopMultiReq() {
         loadConfig.loops = 2;
         jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
+        String multi_base_path = jm.BASE_FILE_PATH;
+        for (int i = 0; i < 2; i++) {
+            String filename = multi_base_path + i + ".csv";
+            System.out.println(filename);
+            try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+                int counter = 0;
+                // number of distinct req
+                // may need to revisit once S3 is implemented
+                int expectedReq = (loadConfig.loops * loadConfig.threads); 
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
-            int counter = 0;
-            // number of distinct req
-            // may need to revisit once S3 is implemented
-            int expectedReq = (loadConfig.loops * loadConfig.threads) * 2; 
-
-            while (reader.readLine() != null) {
-                counter++;
+                while (reader.readLine() != null) {
+                    counter++;
+                }
+                counter--; // decrement for header line
+                System.out.println("Expected Request Count: " + expectedReq);
+                System.out.println("Actual Request Count: " + counter);
+                assertTrue(counter == expectedReq);
+            } catch (IOException e) {
+                e.printStackTrace();
+                fail();
             }
-            counter--; // decrement for header line
-            System.out.println("Expected Request Count: " + expectedReq);
-            System.out.println("Actual Request Count: " + counter);
-            assertTrue(counter == expectedReq);
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail();
         }
+        
     }
 
     @Test
@@ -149,32 +157,36 @@ class JMeterServicesTest {
         loadConfig.loops = -1;
 
         jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
+        
+        for (int i = 0; i < 2; i++) {
+            String filename = JMeterServices.BASE_FILE_PATH + i + ".csv";
+            try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+                String dat;
+                int counter = 0;
+                long startTime = 0;
+                String[] row = new String[3];
+                while ((dat = reader.readLine()) != null) {
+                    if (counter != 0) {
+                        row = dat.split(",");
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
-            String dat;
-            int counter = 0;
-            long startTime = 0;
-            String[] row = new String[3];
-            while ((dat = reader.readLine()) != null) {
-                if (counter != 0) {
-                    row = dat.split(",");
-
-                    String timestamp = row[0];
-                    if (counter == 1) {
-                        startTime = Long.parseLong(timestamp);
+                        String timestamp = row[0];
+                        if (counter == 1) {
+                            startTime = Long.parseLong(timestamp);
+                        }
                     }
+                    counter++;
                 }
-                counter++;
+                long diff = Long.parseLong(row[0]) - startTime;
+                long expectedDuration = loadConfig.duration*1000;
+                System.out.println("Difference between expected and actual duration (ms): " 
+                        + Math.abs(expectedDuration-diff));
+                assertTrue(Math.abs((expectedDuration)-diff) < (1000)); 
+            } catch (IOException e) {
+                e.printStackTrace();
+                fail();
             }
-            long diff = Long.parseLong(row[0]) - startTime;
-            long expectedDuration = loadConfig.duration*1000 * 2; // remove *2 once we implement file upload/delete to S3
-            System.out.println("Difference between expected and actual duration (ms): " 
-                    + Math.abs(expectedDuration-diff));
-            assertTrue(Math.abs((expectedDuration)-diff) < (1000*2)); // remove *2 once we implement file upload/delete to S3
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail();
         }
+        
     }
 
     @Test
@@ -262,5 +274,19 @@ class JMeterServicesTest {
                 }
             }
         }
+    }
+    
+    public static void deleteFolder(File folder) {
+        File[] files = folder.listFiles();
+        if(files!=null) { //some JVMs return null for empty dirs
+            for(File f: files) {
+                if(f.isDirectory()) {
+                    deleteFolder(f);
+                } else {
+                    f.delete();
+                }
+            }
+        }
+        folder.delete();
     }
 }
