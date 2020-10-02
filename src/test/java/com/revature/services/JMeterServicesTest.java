@@ -153,7 +153,7 @@ class JMeterServicesTest {
 
     @Test
     void testLoadTestingDurationMulti() {
-        loadConfig.duration = 3;
+        loadConfig.duration = 15;
         loadConfig.loops = -1;
 
         jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
