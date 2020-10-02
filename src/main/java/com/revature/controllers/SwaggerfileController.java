@@ -11,7 +11,6 @@ import com.revature.services.JMeterServices;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Model;
 import io.swagger.models.Operation;
-import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.HeaderParameter;
@@ -19,15 +18,14 @@ import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import io.swagger.models.properties.Property;
 import io.swagger.parser.SwaggerParser;
-import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+
 
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -36,13 +34,6 @@ public class SwaggerfileController {
 
     @Autowired
     private JMeterServices jms;
-    
-    @GetMapping("/test")
-    public ResponseEntity<Void> test() {
-        System.out.println("Hello world!");
-        
-        return ResponseEntity.ok().build();
-    }
     
     @PostMapping("/upload")
     public ResponseEntity<Void> uploadSwaggerFile(@RequestParam("file") MultipartFile file) throws IOException {
@@ -57,14 +48,11 @@ public class SwaggerfileController {
         
         this.jms.createHTTPSampler(swag);
         
-//        for (Map.Entry<String, Path> entry : swag.getPaths().entrySet()) {
-//            System.out.println(entry.getKey());
-//            printOperations(swag, entry.getValue().getOperationMap());
-//        }
-        
         return ResponseEntity.ok().build();
     }
     
+    // ----------------------- Troubleshooting/test/debug methods ------------------------------
+    // TODO remove when no longer needed
     private static void printOperations(Swagger swag, Map<HttpMethod, Operation> operationMap) {
         for (Map.Entry<HttpMethod, Operation> op : operationMap.entrySet()) {
             System.out.println("HTTP Method: " + op.getKey() + " - " + op.getValue().getOperationId());
@@ -109,5 +97,6 @@ public class SwaggerfileController {
         }
         System.out.println();
     }
+    // --------------------------------------------------------------------------------------
     
 }

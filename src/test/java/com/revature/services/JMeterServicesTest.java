@@ -92,7 +92,9 @@ class JMeterServicesTest {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             int counter = 0;
-            int expectedReq = (loadConfig.loops * loadConfig.threads) * 2; // number of distinct req
+            // number of distinct req
+            // may need to revisit once S3 is implemented
+            int expectedReq = (loadConfig.loops * loadConfig.threads) * 2; 
 
             while (reader.readLine() != null) {
                 counter++;

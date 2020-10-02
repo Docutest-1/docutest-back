@@ -3,6 +3,7 @@ package com.revature.docutest;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 
+// container class for test data
 public class TestUtil {
     
     public static Swagger todos;

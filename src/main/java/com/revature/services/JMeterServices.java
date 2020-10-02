@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 public class JMeterServices {
 
     // Object representing the config for the JMeter test
-    // At the very least, requires a TestPlan, HTTPSamplerm and ThreadGroup
+    // At the very least, requires a TestPlan, HTTPSampler, and ThreadGroup
     // Test Elements can be nested within each other
     private HashTree hashTree = new HashTree();
     
@@ -48,13 +48,14 @@ public class JMeterServices {
 
         JMeterUtils.loadJMeterProperties(propertiesPath);
         JMeterUtils.initLocale();
-
+        
+        // create set of all unique HTTP requests as defined in swagger
         Set<HTTPSampler> httpSampler = this.createHTTPSampler(swag);
-
+        
+        // run a separate load test for each req since we want individual CSV/summaries for each
         for (HTTPSampler element : httpSampler) {
-            TestElement logicController = null;
-
-            logicController = createLoopController(element, testConfig.loops);
+            // use TestElement since we may not always want LoopController
+            TestElement logicController = createLoopController(element, testConfig.loops);
 
             SetupThreadGroup threadGroup = this.createLoad((LoopController) logicController, testConfig.threads,
                     testConfig.rampUp);
@@ -67,7 +68,8 @@ public class JMeterServices {
             hashTree.add("httpSampler", element);
 
             jm.configure(hashTree);
-
+            
+            // recording results of load test
             Summariser summer = null;
             String summariserName = JMeterUtils.getPropDefault("summariser.name", "summary");
             if (summariserName.length() > 0) {
@@ -79,7 +81,9 @@ public class JMeterServices {
             // Definitely need to change if we want multiple users to run multiple tests at once
             String logFile = "./datafiles/run.csv";
             JMeterResponseCollector logger;
+            
             if (testConfig.duration > 0) {
+                // need engine and duration for duration-based tests
                 logger = new JMeterResponseCollector(summer, jm, testConfig.duration);
             } else {
                 logger = new JMeterResponseCollector(summer);
@@ -90,6 +94,9 @@ public class JMeterServices {
             try {
                 jm.run();
                 hashTree.clear();
+                
+                // TODO file upload to S3 here
+                
             } catch (Exception e) {
                 // TODO log
                 e.printStackTrace();
@@ -134,6 +141,8 @@ public class JMeterServices {
                     try {
                         // port
                         element.setPort(Integer.parseInt(splitHost[1]));
+                    
+                    // couldn't parse port
                     } catch (NumberFormatException e) {
                         return null;
                     } catch (IndexOutOfBoundsException e) {
@@ -205,7 +214,7 @@ public class JMeterServices {
     }
 
     /**
-     * Creates a thread group with the given parameters. 
+     * Creates a thread group (specifically a SetupThreadGroup object) with the given parameters. 
      * @param loopControllers for thread group
      * @param nThreads        Number of threads.
      * @param rampUp          Ramp up time in seconds.
