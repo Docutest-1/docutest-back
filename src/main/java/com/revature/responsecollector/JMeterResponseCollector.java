@@ -17,8 +17,8 @@ public class JMeterResponseCollector extends ResultCollector {
     private ArrayList<Long> latencyTimes = new ArrayList<Long>();
     private long responseMax = 0;
     
-    private long startTime = 0;
-    private long currentTime;
+    private long firstSampleStartTime = 0;
+    private long sampleStartTime;
     
     private StandardJMeterEngine engine;
     private int duration = -1;
@@ -38,10 +38,10 @@ public class JMeterResponseCollector extends ResultCollector {
     public void sampleOccurred(SampleEvent e) {
         super.sampleOccurred(e);
         SampleResult r = e.getResult();
-        if (startTime == 0) {
-            startTime = r.getStartTime();
+        if (firstSampleStartTime == 0) {
+            firstSampleStartTime = r.getStartTime();
         }
-        currentTime = r.getStartTime();
+        sampleStartTime = r.getStartTime();
         long latency = r.getLatency();
         latencyTimes.add(latency);
         if (latency > responseMax) {
@@ -55,8 +55,8 @@ public class JMeterResponseCollector extends ResultCollector {
         }
         
         if (duration > 0) {
-            if (currentTime - startTime > duration) {
-                engine.stopTest(true);
+            if (System.currentTimeMillis() - firstSampleStartTime > duration) {
+                engine.stopTest(false);
             }
         }
     }
@@ -100,7 +100,7 @@ public class JMeterResponseCollector extends ResultCollector {
     }
     
     public long getReqPerSec() {
-        long duration = currentTime - startTime;
+        long duration = sampleStartTime - firstSampleStartTime;
         long reqPerSec = 0;
         if (duration != 0) {
             reqPerSec = 1000 * latencyTimes.size() / duration;
@@ -135,13 +135,13 @@ public class JMeterResponseCollector extends ResultCollector {
 
 
     public long getStartTime() {
-        return startTime;
+        return firstSampleStartTime;
     }
 
 
 
     public long getCurrentTime() {
-        return currentTime;
+        return sampleStartTime;
     }
 
 
@@ -166,12 +166,12 @@ public class JMeterResponseCollector extends ResultCollector {
 
 
     public void setStartTime(long startTime) {
-        this.startTime = startTime;
+        this.firstSampleStartTime = startTime;
     }
 
 
     public void setCurrentTime(long currentTime) {
-        this.currentTime = currentTime;
+        this.sampleStartTime = currentTime;
     }
     
     
