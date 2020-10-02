@@ -11,4 +11,5 @@ public class LoadTestConfig {
     public int duration;
     public int threads;
     public int rampUp;
+    public boolean followRedirects = true;
 }

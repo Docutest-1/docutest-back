@@ -7,7 +7,7 @@
         "contact": {}
     },
 
-    "host": "google.com:80",
+    "host": "example.com:80",
     "basePath": "/",
     "tags": [],
     "paths": {

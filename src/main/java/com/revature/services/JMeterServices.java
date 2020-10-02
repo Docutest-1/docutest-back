@@ -164,6 +164,7 @@ public class JMeterServices {
                     String parsedURL = this.parseURL(fullPath, verbs);
                     element.setPath(parsedURL);
                     element.setMethod(verb.toString());
+                    element.setFollowRedirects(testConfig.followRedirects);
 
                     httpSamplers.add(element);
                 }

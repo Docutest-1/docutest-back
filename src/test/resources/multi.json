@@ -7,7 +7,7 @@
         "contact": {}
     },
 
-    "host": "example.com:80",
+    "host": "blazedemo.com:80",
     "basePath": "/",
     "tags": [],
     "paths": {
@@ -20,7 +20,7 @@
                 }
             }
         },
-        "/nfs" : {
+        "/login" : {
             "get" : {
                 "responses" : {
                     "200" : {
