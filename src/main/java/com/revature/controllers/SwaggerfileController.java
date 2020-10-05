@@ -2,12 +2,18 @@ package com.revature.controllers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.revature.models.ResultSummary;
+import com.revature.models.SwaggerSummary;
 import com.revature.services.JMeterService;
+import com.revature.services.ResultSummaryService;
+import com.revature.services.SwaggerSummaryService;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Model;
 import io.swagger.models.Operation;
@@ -21,6 +27,7 @@ import io.swagger.parser.SwaggerParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,18 +42,33 @@ public class SwaggerfileController {
     @Autowired
     private JMeterService jms;
     
+    @Autowired
+    private SwaggerSummaryService swaggerSummaryService;
+    
+    @Autowired
+    private ResultSummaryService resultSummaryService;
+    
     @PostMapping("/upload")
-    public ResponseEntity<Void> uploadSwaggerFile(@RequestParam("file") MultipartFile file) throws IOException {
-        System.out.println("Filename: " + file.getOriginalFilename() + "\n");
+    public ResponseEntity<Void> uploadSwaggerFile(@RequestParam("file") MultipartFile file) throws IOException, URISyntaxException {
+        // TESTING PURPOSES
+        SwaggerSummary s = swaggerSummaryService.insert();
+        ResultSummary rs = new ResultSummary(new URI("/test"), "GET", 100, 25, 80, 126, 175, 10, 90, 20, "s3.aws.com/dfdfdfs.csv");
         
-        InputStream jsonStream = file.getInputStream();
+        s.getResultsummaries().add(rs);
         
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(jsonStream);
+        resultSummaryService.insert(rs);
+        // *****************************
         
-        Swagger swag = new SwaggerParser().read(node);
+//        System.out.println("Filename: " + file.getOriginalFilename() + "\n");
+//        
+//        InputStream jsonStream = file.getInputStream();
+//        
+//        ObjectMapper mapper = new ObjectMapper();
+//        JsonNode node = mapper.readTree(jsonStream);
         
-        this.jms.createHTTPSampler(swag);
+//        Swagger swag = new SwaggerParser().read(node);
+        
+//        this.jms.createHTTPSampler(swag);
         
         return ResponseEntity.ok().build();
     }
