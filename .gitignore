@@ -65,3 +65,7 @@ datafiles/*.csv
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+
+# sanity check for jmeter post bodies
+src/test/resources/post_temp.json

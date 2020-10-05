@@ -10,6 +10,7 @@ import com.revature.models.ResultSummary;
 import com.revature.models.SwaggerSummary;
 import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
+import io.swagger.models.HttpMethod;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
@@ -21,8 +22,6 @@ import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-
 
 @Service
 public class JMeterService {
@@ -45,8 +44,8 @@ public class JMeterService {
     /**
      * Runs the JMeter test using a Docutest object, test configuration, and JMeter
      * properties path. If both duration and number of loops are set, duration takes
-     * precedence. If the requests field of the Docutest object is empty or null, the
-     * threads still start up and run, but won't make any requests.
+     * precedence. If the requests field of the Docutest object is empty or null,
+     * the threads still start up and run, but won't make any requests.
      * 
      * @param input          Input Docutest object
      * @param testConfig     LoadTestConfig object with test settings
@@ -126,6 +125,7 @@ public class JMeterService {
     /**
      * For OAS 2.0. Parses HTTP request conditions from Docutest input and generates
      * an array of HTTPSampler objects based the requests field.
+     * 
      * @param input Docutest object
      * @return Set of HTTPSampler objects. Returns an empty set if there are no
      *         endpoints. Returns null if there is a problem with the Swagger input.
@@ -148,6 +148,11 @@ public class JMeterService {
                 element.setPath(path);
                 element.setMethod(req.getVerb().toString());
                 element.setFollowRedirects(true);
+                
+                if (requiresBody(req.getVerb())) {
+                    element.setPostBodyRaw(true);
+                    element.addNonEncodedArgument("", req.getBody(), "application/json");
+                }
 
                 httpSamplers.add(element);
             }
@@ -193,6 +198,7 @@ public class JMeterService {
         if (testConfig.getDuration() > 0) {
             ret.setScheduler(true);
             ret.setDuration(testConfig.getDuration());
+            controller.setLoops(-1);
         }
         ret.setNumThreads(threads);
         ret.setRampUp(rampUp);
@@ -204,8 +210,9 @@ public class JMeterService {
     // --------------------- HELPER METHODS -------------------------
 
     /**
-     * Formats path to prevent example.com//. If both basepath and path are "/", returns
-     * an empty string
+     * Formats path to prevent example.com//. If both basepath and path are "/",
+     * returns an empty string
+     * 
      * @param basePath
      * @param path
      * @return Adjusted path
@@ -218,4 +225,19 @@ public class JMeterService {
         }
         return basePath + path;
     }
+
+    private boolean requiresBody(HttpMethod verb) {
+        switch (verb.toString()) {
+        case "POST":
+            return true;
+        case "PUT":
+            return true;
+        case "PATCH":
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    
 }

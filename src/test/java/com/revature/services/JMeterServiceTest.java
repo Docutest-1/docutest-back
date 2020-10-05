@@ -1,6 +1,7 @@
 package com.revature.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -10,8 +11,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
 import org.junit.jupiter.api.AfterAll;
@@ -56,7 +59,8 @@ class JMeterServiceTest {
     @Mock
     private SwaggerSummaryService sss;
     
-    private OASService adapter = new OASService();
+    private static OASService adapter = new OASService(new JSONStringCreator());
+
     private SwaggerDocutest testSpecs;
     
     @BeforeAll
@@ -244,7 +248,49 @@ class JMeterServiceTest {
     void testCreateLoopControllerNull() {
         assertNull(jm.createLoopController(null, loadConfig.getLoops()));
     }
+    
+    // ---------------- Body Tests -------------------
+    @Test
+    void testObjectCreatorSimplePost() {
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.post));
+        Set<HTTPSampler> samplers = jm.createHTTPSampler(testSpecs);
+        
+        for (HTTPSampler element : samplers) {
+            Arguments args = element.getArguments();
+            Map<String, String> argsMap = args.getArgumentsAsMap();
+            String bodyText = argsMap.get("").replaceAll("\\s", "");     
+            String expected = TestUtil.POST_OBJ_JSON.replaceAll("\\s", "");
 
+            if (!argsMap.isEmpty()) {
+                assertEquals(expected, bodyText);
+            } else {
+                assertNull(bodyText);
+            }
+        }
+
+    }
+    
+    @Test
+    void testObjectCreatorHTTPSampler() {
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.petstore));
+        Set<HTTPSampler> samplers = jm.createHTTPSampler(testSpecs);
+        for (HTTPSampler element : samplers) {
+            Arguments args = element.getArguments();
+            Map<String, String> argsMap = args.getArgumentsAsMap();
+            String bodyText = argsMap.get("");            
+
+            if (!argsMap.isEmpty()) {
+                System.out.println(bodyText);
+                // argsMap returns a string with "null" if no valid values
+                assertNotEquals("null",bodyText);
+            } else {
+                assertNull(bodyText);
+            }
+        }
+    }
+
+    // ------------------------------ HELPER METHODS ---------------------------------
+    
     // helper method to clear folder between each test
     public static void deleteFolder(File folder) {
         File[] files = folder.listFiles();
