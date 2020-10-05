@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.reporters.Summariser;
@@ -20,40 +21,25 @@ import com.revature.docutest.TestUtil;
 import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
 
-public class JMeterResponseCollectorTest {
+class JMeterResponseCollectorTest {
     private JMeterResponseCollector jmrc;
     private StandardJMeterEngine engine;
     private static final String JMeterPropPath = "src/test/resources/test.properties";
-    private SampleEvent event1;
-    private SampleEvent event2;
-    private SampleEvent event3;
-    private SampleEvent event4;
-    private SampleEvent event5;
-    private SampleResult event1Result;
-    private SampleResult event2Result;
-    private SampleResult event3Result;
-    private SampleResult event4Result;
-    private SampleResult event5Result;
 
+    private static List<SampleEvent> sampleEvents = new ArrayList<>();
+    
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
-    }
-
-    @AfterAll
-    static void tearDownAfterClass() throws Exception {
-    }
-
-    @BeforeEach
-    void setUp() throws Exception {
-
-        engine = new StandardJMeterEngine();
-        JMeterUtils.loadJMeterProperties(JMeterPropPath);
-        Summariser summer = null;
-     
+        SampleEvent event1;
+        SampleEvent event2;
+        SampleEvent event3;
+        SampleEvent event4;
+        SampleResult event1Result;
+        SampleResult event2Result;
+        SampleResult event3Result;
+        SampleResult event4Result;
+        SampleResult event5Result;
         
-        jmrc = new JMeterResponseCollector(summer);
-        
-
         event1Result = SampleResult.createTestSample(100,200);
         event1Result.setLatency(100);
         event1Result.setResponseCode("200");
@@ -74,143 +60,148 @@ public class JMeterResponseCollectorTest {
         event4Result.setResponseCode("400");
         event4 = new SampleEvent(event4Result, "Sample Thread Group");
         
-        event5Result = SampleResult.createTestSample(1100, 1350);
-        event5Result.setLatency(250);
-        event5Result.setResponseCode("400");
-        event5 = new SampleEvent(event5Result, "Sample Thread Group");
-        
+        sampleEvents.add(event1);
+        sampleEvents.add(event2);
+        sampleEvents.add(event3);
+        sampleEvents.add(event4);
+    }
 
+    @AfterAll
+    static void tearDownAfterClass() throws Exception {
+    }
+
+    @BeforeEach
+    void setUp() throws Exception {
+        engine = new StandardJMeterEngine();
+        JMeterUtils.loadJMeterProperties(JMeterPropPath);
+        Summariser summer = null;
+        
+        jmrc = new JMeterResponseCollector(summer);
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        jmrc.setFailCount(0);
         jmrc.setCurrentTime(0);
         jmrc.setStartTime(0);
         jmrc.setResponseMax(0);
-        jmrc.setLatencyTimes(null);
-        jmrc.setOkResponse(0);
+        jmrc.setResponseTimes(null);
     }
     
     @Test
     void testgetsuccessFailPercentageNoEvents() {
-        long expected = (long) 0;
+        double expected = 0.0;
         assertEquals(expected, jmrc.getsuccessFailPercentage());
     }
     
     @Test
     void test200ResponseNoEvents() {
         int expected = 0;
-        assertEquals(expected, jmrc.getOkResponse());
+        assertEquals(expected, jmrc.getNum2XX());
     }
     
     @Test
     void test400ResponseNoEvents() {
         int expected = 0;
-        assertEquals(expected, jmrc.getFailCount());
+        assertEquals(expected, jmrc.getNum4XX());
     }
     
     @Test
     void test200ResponseEvent() {
-        int expected = jmrc.getOkResponse() + 1;
-        jmrc.sampleOccurred(event1);
-        assertEquals(expected, jmrc.getOkResponse());
+        int expected = jmrc.getNum2XX() + 1;
+        jmrc.sampleOccurred(sampleEvents.get(0));
+        assertEquals(expected, jmrc.getNum2XX());
     }
     
     @Test
     void test400ResponseEvent() {
-        int expected = jmrc.getFailCount() + 1;
-        jmrc.sampleOccurred(event2);
-        assertEquals(expected, jmrc.getFailCount());
+        int expected = jmrc.getNum4XX() + 1;
+        jmrc.sampleOccurred(sampleEvents.get(1));
+        assertEquals(expected, jmrc.getNum4XX());
     }
     
     @Test
     void testAddLatency() {
         ArrayList<Long> expected = new ArrayList<Long>();
         expected.add((long) 100);
-        jmrc.sampleOccurred(event1);
-        assertEquals(expected, jmrc.getLatencyTimes());
+        jmrc.sampleOccurred(sampleEvents.get(0));
+        assertEquals(expected, jmrc.getResponseTimes());
     }
     
     @Test
     void testFirstStartTime() {
         long startTime = 100;
-        jmrc.sampleOccurred(event1);
+        jmrc.sampleOccurred(sampleEvents.get(0));
         assertEquals(startTime, jmrc.getStartTime());
     }
     @Test
     void testStartTimeAfterSet() {
         long startTime = 100;
-        jmrc.sampleOccurred(event1);
-        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(sampleEvents.get(0));
+        jmrc.sampleOccurred(sampleEvents.get(1));
         assertEquals(startTime, jmrc.getStartTime());
     }
     @Test
     void testCurrentTime() {
         long currentTime = 200;
-        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(sampleEvents.get(1));
         assertEquals(currentTime, jmrc.getCurrentTime());
     }
     
     @Test
     void testMaxLatency() {
         long responseMax = 200;
-        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(sampleEvents.get(1));
         assertEquals(responseMax, jmrc.getResponseMax());
     }
     
     @Test
     void testgetsuccessFailPercentage() {
-        jmrc.sampleOccurred(event1);
-        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(sampleEvents.get(0));
+        jmrc.sampleOccurred(sampleEvents.get(1));
         float expected = 0.5f;
-        System.out.println(jmrc.getsuccessFailPercentage());
         assertEquals(expected, jmrc.getsuccessFailPercentage());
     }
     
     @Test
     void testgetResponseAvg() {
         long expected = 150;
-        jmrc.sampleOccurred(event1);
-        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(sampleEvents.get(0));
+        jmrc.sampleOccurred(sampleEvents.get(1));
         assertEquals(expected, jmrc.getResponseAvg());
     }
     
     @Test
     void testgetReqPerSec() {
         long expected = 20;
-        jmrc.sampleOccurred(event1);
-        jmrc.sampleOccurred(event2);
+        jmrc.sampleOccurred(sampleEvents.get(0));
+        jmrc.sampleOccurred(sampleEvents.get(1));
         assertEquals(expected, jmrc.getReqPerSec());
     }
     
     @Test
     void testgetResponse25percentile() {
         long expected = 100;
-        jmrc.sampleOccurred(event1);
-        jmrc.sampleOccurred(event2);
-        jmrc.sampleOccurred(event3);
-        jmrc.sampleOccurred(event4);
+        for (SampleEvent e : sampleEvents) {
+            jmrc.sampleOccurred(e);
+        }
         assertEquals(expected, jmrc.getResponse25Percentile());
     }
     
     @Test
     void testgetResponse50percentile() {
         long expected = 200;
-        jmrc.sampleOccurred(event1);
-        jmrc.sampleOccurred(event2);
-        jmrc.sampleOccurred(event3);
-        jmrc.sampleOccurred(event4);
+        for (SampleEvent e : sampleEvents) {
+            jmrc.sampleOccurred(e);
+        }
         assertEquals(expected, jmrc.getResponse50Percentile());
     }
     
     @Test
     void testgetResponse75percentile() {
         long expected = 300;
-        jmrc.sampleOccurred(event1);
-        jmrc.sampleOccurred(event2);
-        jmrc.sampleOccurred(event3);
-        jmrc.sampleOccurred(event4);
+        for (SampleEvent e : sampleEvents) {
+            jmrc.sampleOccurred(e);
+        }
         assertEquals(expected, jmrc.getResponse75Percentile());
     }
 }

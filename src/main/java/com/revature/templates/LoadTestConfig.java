@@ -1,15 +1,13 @@
 package com.revature.templates;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter @Setter @EqualsAndHashCode
+@Data
 public class LoadTestConfig {
-    public String testPlanName = "";
-    public int loops;
-    public int duration;
-    public int threads;
-    public int rampUp;
-    public boolean followRedirects = true;
+    private String testPlanName = "";
+    private int loops;
+    private int duration;
+    private int threads;
+    private int rampUp;
+    private boolean followRedirects = true;
 }

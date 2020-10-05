@@ -1,6 +1,7 @@
 package com.revature.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -28,9 +29,9 @@ import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 
-class JMeterServicesTest {
+class JMeterServiceTest {
 
-    private JMeterServices jm;
+    private JMeterService jm;
     private LoadTestConfig loadConfig = new LoadTestConfig();
     private static final String JMeterPropPath = "src/test/resources/test.properties";
     private static final String CSV_FILE_PATH = "./datafiles/user_0.csv";
@@ -46,13 +47,13 @@ class JMeterServicesTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        loadConfig.loops = 1;
-        loadConfig.rampUp = 2;
-        loadConfig.threads = 20;
-        loadConfig.duration = -1;
-        loadConfig.testPlanName = "JMeterServicesTest";
+        loadConfig.setLoops(1);
+        loadConfig.setRampUp(2);
+        loadConfig.setThreads(10);
+        loadConfig.setDuration(-1);
+        loadConfig.setTestPlanName("JMeterServicesTest");
 
-        jm = new JMeterServices();
+        jm = new JMeterService();
         TestUtil.initFields();
 
         File directory = new File(DIRECTORY_PATH);
@@ -65,20 +66,16 @@ class JMeterServicesTest {
 
     @Test
     void testLoadTestingLoop() {
-        loadConfig.loops = 2;
+        loadConfig.setLoops(2);
+        int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
+
         jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
-            int counter = 0;
-            int expectedReq = (loadConfig.loops * loadConfig.threads);
-
-            while (reader.readLine() != null) {
-                counter++;
-            }
-            counter--; // decrement for header line
+            int counter = getCounter(reader);
             System.out.println("Expected Request Count: " + expectedReq);
             System.out.println("Actual Request Count: " + counter);
-            assertTrue(counter == expectedReq);
+            assertEquals(expectedReq, counter);
         } catch (IOException e) {
             e.printStackTrace();
             fail();
@@ -87,25 +84,18 @@ class JMeterServicesTest {
 
     @Test
     void testLoadTestingLoopMultiReq() {
-        loadConfig.loops = 2;
+        loadConfig.setLoops(2);
+        int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
+
         jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
-        String multi_base_path = jm.BASE_FILE_PATH;
         for (int i = 0; i < 2; i++) {
-            String filename = multi_base_path + i + ".csv";
+            String filename = JMeterService.BASE_FILE_PATH + i + ".csv";
             System.out.println(filename);
             try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-                int counter = 0;
-                // number of distinct req
-                // may need to revisit once S3 is implemented
-                int expectedReq = (loadConfig.loops * loadConfig.threads);
-
-                while (reader.readLine() != null) {
-                    counter++;
-                }
-                counter--; // decrement for header line
+                int counter = getCounter(reader);
                 System.out.println("Expected Request Count: " + expectedReq);
                 System.out.println("Actual Request Count: " + counter);
-                assertTrue(counter == expectedReq);
+                assertEquals(expectedReq, counter);
             } catch (IOException e) {
                 e.printStackTrace();
                 fail();
@@ -116,32 +106,18 @@ class JMeterServicesTest {
 
     @Test
     void testLoadTestingDuration() throws IOException {
-        loadConfig.duration = 3;
-        loadConfig.loops = -1;
+        loadConfig.setDuration(3);
+        loadConfig.setLoops(-1);
 
         jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
-            String dat;
-            int counter = 0;
-            long startTime = 0;
-            String[] row = new String[3];
-            while ((dat = reader.readLine()) != null) {
-                if (counter != 0) {
-                    row = dat.split(",");
-
-                    String timestamp = row[0];
-                    if (counter == 1) {
-                        startTime = Long.parseLong(timestamp);
-                    }
-                }
-                counter++;
-            }
-            long diff = Long.parseLong(row[0]) - startTime;
+            long diff = getDiff(reader);
             // flat amount + 5% of duration in ms
             System.out.println("Difference between expected and actual duration (ms): "
-                    + Math.abs((loadConfig.duration * 1000) - diff));
-            assertTrue(Math.abs((loadConfig.duration * 1000) - diff) < (2000 + (loadConfig.duration*1000/20)));
+                    + Math.abs((loadConfig.getDuration() * 1000) - diff));
+            assertTrue(Math
+                    .abs((loadConfig.getDuration() * 1000) - diff) < (2000 + (loadConfig.getDuration() * 1000 / 20)));
         } catch (IOException e) {
             e.printStackTrace();
             fail();
@@ -150,35 +126,20 @@ class JMeterServicesTest {
 
     @Test
     void testLoadTestingDurationMulti() {
-        loadConfig.duration = 10;
-        loadConfig.loops = -1;
+        loadConfig.setDuration(10);
+        loadConfig.setLoops(-1);
 
         jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
 
         for (int i = 0; i < 2; i++) {
-            String filename = JMeterServices.BASE_FILE_PATH + i + ".csv";
+            String filename = JMeterService.BASE_FILE_PATH + i + ".csv";
             try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-                String dat;
-                int counter = 0;
-                long startTime = 0;
-                String[] row = new String[3];
-                while ((dat = reader.readLine()) != null) {
-                    if (counter != 0) {
-                        row = dat.split(",");
-
-                        String timestamp = row[0];
-                        if (counter == 1) {
-                            startTime = Long.parseLong(timestamp);
-                        }
-                    }
-                    counter++;
-                }
-                long diff = Long.parseLong(row[0]) - startTime;
-                long expectedDuration = loadConfig.duration*1000;
-                System.out.println("Difference between expected and actual duration (ms): "
-                        + Math.abs(expectedDuration-diff));
+                long diff = getDiff(reader);
+                long expectedDuration = loadConfig.getDuration() * 1000;
+                System.out.println(
+                        "Difference between expected and actual duration (ms): " + Math.abs(expectedDuration - diff));
                 // flat amount + 5% of duration in ms
-                assertTrue(Math.abs((expectedDuration)-diff) < (2000 + (loadConfig.duration*1000/20)));
+                assertTrue(Math.abs((expectedDuration) - diff) < (2000 + (loadConfig.getDuration() * 1000 / 20)));
             } catch (IOException e) {
                 e.printStackTrace();
                 fail();
@@ -190,9 +151,9 @@ class JMeterServicesTest {
     @Test
     void testHttpSamplerDistinctRequestCount() {
         Set<HTTPSampler> samplers = jm.createHTTPSampler(TestUtil.get);
-        assertTrue(1 == samplers.size());
+        assertEquals(1, samplers.size());
         samplers = jm.createHTTPSampler(TestUtil.todos);
-        assertTrue(7 == samplers.size());
+        assertEquals(7, samplers.size());
     }
 
     @Test
@@ -219,25 +180,25 @@ class JMeterServicesTest {
 
     @Test
     void testHttpSamplerNull() {
-        assertTrue(0 == jm.createHTTPSampler(null).size());
+        assertEquals(0, jm.createHTTPSampler(null).size());
     }
 
     @Test
     void testHttpSamplerNoReq() {
-        assertTrue(0 == jm.createHTTPSampler(TestUtil.blank).size());
+        assertEquals(0, jm.createHTTPSampler(TestUtil.blank).size());
     }
 
     @Test
     void testHttpSamplerNoHost() {
-        assertTrue(0 == jm.createHTTPSampler(TestUtil.malformed).size());
+        assertEquals(0, jm.createHTTPSampler(TestUtil.malformed).size());
     }
 
     @Test
     void testCreateLoopController() {
         Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
         for (HTTPSampler element : samplerSet) {
-            LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.loops);
-            assertTrue(loadConfig.loops == testLC.getLoops());
+            LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.getLoops());
+            assertEquals(loadConfig.getLoops(), testLC.getLoops());
             // way to check loadconfig elements?
         }
 
@@ -245,7 +206,7 @@ class JMeterServicesTest {
 
     @Test
     void testCreateLoopControllerNull() {
-        assertTrue(null == jm.createLoopController(null, loadConfig.loops));
+        assertNull(jm.createLoopController(null, loadConfig.getLoops()));
     }
 
     @Test
@@ -274,11 +235,12 @@ class JMeterServicesTest {
         }
     }
 
+    // helper method to clear folder between each test
     public static void deleteFolder(File folder) {
         File[] files = folder.listFiles();
-        if(files!=null) { //some JVMs return null for empty dirs
-            for(File f: files) {
-                if(f.isDirectory()) {
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
                     deleteFolder(f);
                 } else {
                     f.delete();
@@ -286,5 +248,39 @@ class JMeterServicesTest {
             }
         }
         folder.delete();
+    }
+
+    // helper method for duration tests to get difference between latest starttime
+    // and initial starttime, in ms
+    public static long getDiff(BufferedReader reader) throws NumberFormatException, IOException {
+        String dat;
+        int counter = 0;
+        long startTime = 0;
+        String[] row = new String[3];
+        while ((dat = reader.readLine()) != null) {
+            if (counter != 0) {
+                row = dat.split(",");
+
+                String timestamp = row[0];
+                if (counter == 1) {
+                    startTime = Long.parseLong(timestamp);
+                }
+            }
+            counter++;
+        }
+        return Long.parseLong(row[0]) - startTime;
+    }
+
+    // helper method to get number of httprequests sent for loop-based tests
+    public static int getCounter(BufferedReader reader) throws IOException {
+        int counter = 0;
+        // number of distinct req
+        // may need to revisit once S3 is implemented
+
+        while (reader.readLine() != null) {
+            counter++;
+        }
+        counter--; // decrement for header line
+        return counter;
     }
 }

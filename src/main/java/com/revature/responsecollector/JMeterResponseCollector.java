@@ -2,8 +2,8 @@ package com.revature.responsecollector;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
-import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.reporters.Summariser;
 import org.apache.jmeter.samplers.SampleEvent;
@@ -11,28 +11,19 @@ import org.apache.jmeter.samplers.SampleResult;
 
 public class JMeterResponseCollector extends ResultCollector { 
     
-    private static final long serialVersionUID = 1L;
-    private int failCount = 0;
-    private int okResponse = 0;
-    private ArrayList<Long> latencyTimes = new ArrayList<Long>();
+    private static final long serialVersionUID = -4468726154521336732L;
+    private List<Long> responseTimes = new ArrayList<>();
     private long responseMax = 0;
     
     private long firstSampleStartTime = 0;
     private long sampleStartTime;
     
-    private StandardJMeterEngine engine;
-    private int duration = -1;
+    // count of number of nXX status codes
+    private int[] statusCodeCount = new int[5];
     
     public JMeterResponseCollector(Summariser summer) {
         super(summer);
     }
-    
-    public JMeterResponseCollector(Summariser summer, StandardJMeterEngine engine, int duration) {
-        super(summer);
-        this.engine = engine;
-        this.duration = duration * 1000;
-    }
-    
 
     @Override
     public void sampleOccurred(SampleEvent e) {
@@ -42,132 +33,114 @@ public class JMeterResponseCollector extends ResultCollector {
             firstSampleStartTime = r.getStartTime();
         }
         sampleStartTime = r.getStartTime();
-        long latency = r.getLatency();
-        latencyTimes.add(latency);
-        if (latency > responseMax) {
-            responseMax = latency;
+        long responseTime = r.getEndTime() - r.getStartTime();
+        responseTimes.add(responseTime);
+        if (responseTime > responseMax) {
+            responseMax = responseTime;
         }
-        if (r.getResponseCode().charAt(0) == '4' || r.getResponseCode().charAt(0) == '5') {
-            failCount += 1;
-        }
-        if (r.getResponseCode().charAt(0) == '2') {
-            okResponse += 1;
-        }
-
+        
+        char temp = r.getResponseCode().charAt(0);
+        int respType = Character.getNumericValue(temp);
+        // -1 since indices start at 0
+        statusCodeCount[respType - 1]++;
     }
     
-    public float getsuccessFailPercentage() {
-        float ratio = 0;
-        if (latencyTimes.size() != 0) {
-            ratio = ((float) okResponse) / latencyTimes.size();
-        } 
+    public double getsuccessFailPercentage() {
+        double ratio = 0;
+        if (statusCodeCount[1] + statusCodeCount[3] + statusCodeCount[4] != 0) {
+            ratio = ((double) statusCodeCount[1]) / (statusCodeCount[1] + statusCodeCount[3] + statusCodeCount[4]);
+        }
         return ratio;
     }
     
     public long getResponseAvg() {
-        long length = latencyTimes.size();
+        long length = responseTimes.size();
         long sum = 0;
-        for (long lat : latencyTimes) {
+        for (long lat : responseTimes) {
             sum += lat;
         }
-        long avg = sum / length;
-        return avg;
+        return sum / length;
     }
     
     public long getResponse50Percentile() {
-        Collections.sort(latencyTimes);
+        Collections.sort(responseTimes);
 
-        int middle = (int) Math.round(latencyTimes.size() * 0.5);
-        return latencyTimes.get(middle - 1);
+        int middle = (int) Math.round(responseTimes.size() * 0.5);
+        return responseTimes.get(middle - 1);
     }
     
     public long getResponse25Percentile() {
-        Collections.sort(latencyTimes);
+        Collections.sort(responseTimes);
 
-        int split = (int) Math.round(latencyTimes.size() * 0.25);
-        return latencyTimes.get(split - 1);
+        int split = (int) Math.round(responseTimes.size() * 0.25);
+        return responseTimes.get(split - 1);
     }
     
     public long getResponse75Percentile() {
-        Collections.sort(latencyTimes);
-        int split = (int) Math.round(latencyTimes.size() * 0.75);
-        return latencyTimes.get(split - 1);
+        Collections.sort(responseTimes);
+        int split = (int) Math.round(responseTimes.size() * 0.75);
+        return responseTimes.get(split - 1);
     }
     
-    public long getReqPerSec() {
+    public double getReqPerSec() {
         long duration = sampleStartTime - firstSampleStartTime;
-        long reqPerSec = 0;
+        double reqPerSec = 0;
         if (duration != 0) {
-            reqPerSec = 1000 * latencyTimes.size() / duration;
+            reqPerSec = 1000 * ((double) responseTimes.size()) / duration;
         }
         return reqPerSec;
     }
 
-
-
-    public int getFailCount() {
-        return failCount;
+    public List<Long> getResponseTimes() {
+        return responseTimes;
     }
-
-
-
-    public int getOkResponse() {
-        return okResponse;
-    }
-
-
-
-    public ArrayList<Long> getLatencyTimes() {
-        return latencyTimes;
-    }
-
-
 
     public long getResponseMax() {
         return responseMax;
     }
 
-
-
     public long getStartTime() {
         return firstSampleStartTime;
     }
-
-
 
     public long getCurrentTime() {
         return sampleStartTime;
     }
 
 
-    public void setFailCount(int failCount) {
-        this.failCount = failCount;
+    public int getNum1XX() {
+        return statusCodeCount[0];
     }
 
-
-    public void setOkResponse(int okResponse) {
-        this.okResponse = okResponse;
+    public int getNum2XX() {
+        return statusCodeCount[1];
     }
 
-
-    public void setLatencyTimes(ArrayList<Long> latencyTimes) {
-        this.latencyTimes = latencyTimes;
+    public int getNum3XX() {
+        return statusCodeCount[2];
     }
 
+    public int getNum4XX() {
+        return statusCodeCount[3];
+    }
+
+    public int getNum5XX() {
+        return statusCodeCount[4];
+    }
+
+    public void setResponseTimes(List<Long> latencyTimes) {
+        this.responseTimes = latencyTimes;
+    }
 
     public void setResponseMax(long responseMax) {
         this.responseMax = responseMax;
     }
 
-
     public void setStartTime(long startTime) {
         this.firstSampleStartTime = startTime;
     }
 
-
     public void setCurrentTime(long currentTime) {
         this.sampleStartTime = currentTime;
     }
-    
-    
 }

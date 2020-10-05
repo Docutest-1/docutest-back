@@ -7,7 +7,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.revature.services.JMeterServices;
+import com.revature.services.JMeterService;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Model;
 import io.swagger.models.Operation;
@@ -33,7 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class SwaggerfileController {
 
     @Autowired
-    private JMeterServices jms;
+    private JMeterService jms;
     
     @PostMapping("/upload")
     public ResponseEntity<Void> uploadSwaggerFile(@RequestParam("file") MultipartFile file) throws IOException {

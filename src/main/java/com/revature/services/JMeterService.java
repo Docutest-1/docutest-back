@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.revature.models.ResultSummary;
 import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
 import io.swagger.models.HttpMethod;
@@ -25,7 +26,7 @@ import org.apache.jorphan.collections.HashTree;
 import org.springframework.stereotype.Service;
 
 @Service
-public class JMeterServices {
+public class JMeterService {
 
     // Object representing the config for the JMeter test
     // At the very least, requires a TestPlan, HTTPSampler, and ThreadGroup
@@ -36,6 +37,8 @@ public class JMeterServices {
     public static final String BASE_FILE_PATH = "./datafiles/user_";
 
     private LoadTestConfig testConfig = new LoadTestConfig();
+    
+    private Set<ResultSummary> resultSummaries = new HashSet<>();
 
     /**
      * Runs the JMeter test using a Swagger object, test configuration, and JMeter properties path.
@@ -60,12 +63,12 @@ public class JMeterServices {
         // run a separate load test for each req since we want individual CSV/summaries for each
         for (HTTPSampler element : httpSampler) {
             // use TestElement since we may not always want LoopController
-            TestElement logicController = createLoopController(element, testConfig.loops);
+            TestElement logicController = createLoopController(element, testConfig.getLoops());
 
-            SetupThreadGroup threadGroup = this.createLoad((LoopController) logicController, testConfig.threads,
-                    testConfig.rampUp);
+            SetupThreadGroup threadGroup = this.createLoad((LoopController) logicController, testConfig.getThreads(),
+                    testConfig.getRampUp());
 
-            TestPlan testPlan = new TestPlan(testConfig.testPlanName);
+            TestPlan testPlan = new TestPlan(testConfig.getTestPlanName());
             testPlan.setProperty(TestElement.TEST_CLASS, TestPlan.class.getName());
 
             hashTree.add("testPlan", testPlan);
@@ -86,28 +89,28 @@ public class JMeterServices {
             // Definitely need to change if we want multiple users to run multiple tests at once
             String logFile = BASE_FILE_PATH + reqNumber + ".csv";
             reqNumber++;
+            
             JMeterResponseCollector logger;
-
-            if (testConfig.duration > 0) {
-                // need engine and duration for duration-based tests
-                logger = new JMeterResponseCollector(summer, jm, testConfig.duration);
-            } else {
-                logger = new JMeterResponseCollector(summer);
-            }
+            logger = new JMeterResponseCollector(summer);
             logger.setFilename(logFile);
+            
             hashTree.add(hashTree.getArray()[0], logger);
 
             try {
                 jm.run();
                 hashTree.clear();
-
+                
+                ResultSummary resultSummary = new ResultSummary(logger);
+                resultSummary.setHttpMethod(element.getMethod());
+                resultSummary.setUri(element.getUrl().toURI());
                 // TODO file upload to S3 here
-
+                resultSummaries.add(resultSummary);
             } catch (Exception e) {
                 // TODO log
                 e.printStackTrace();
             }
         }
+//        TODO save resultsummaries to Hibernate
     }
 
     /**
@@ -127,15 +130,16 @@ public class JMeterServices {
 
             // trim, remove "
             host = host.trim();
-            host = host.replaceAll("\"", "");
+            host = host.replace("\"", "");
 
             String[] splitHost = host.split(":");
             String basePath = input.getBasePath();
             Map<String, Path> endpoints = input.getPaths();
 
             // each path
-            for (String path : endpoints.keySet()) {
-                Path pathOperations = endpoints.get(path);
+            for (Map.Entry<String, Path> entry : endpoints.entrySet()) {
+                String path = entry.getKey();
+                Path pathOperations = entry.getValue();
                 Map<HttpMethod, Operation> verbs = pathOperations.getOperationMap();
 
                 // each verb/operation
@@ -144,16 +148,8 @@ public class JMeterServices {
 
                     // domain
                     element.setDomain(splitHost[0]);
-                    try {
-                        // port
-                        element.setPort(Integer.parseInt(splitHost[1]));
-
-                    // couldn't parse port
-                    } catch (NumberFormatException e) {
-                        return null;
-                    } catch (IndexOutOfBoundsException e) {
-                        return null;
-                    }
+                    // port
+                    element.setPort(Integer.parseInt(splitHost[1]));
 
                     // path
                     if (basePath.equals("/")) {
@@ -173,9 +169,12 @@ public class JMeterServices {
             // return empty set in case of missing params
             // TODO log
             e.printStackTrace();
-            return new HashSet<HTTPSampler>();
+            return new HashSet<>();
+            
+        // problem parsing
+        } catch (NumberFormatException | IndexOutOfBoundsException e) {
+            return null;
         }
-
         return httpSamplers;
     }
 
@@ -205,7 +204,7 @@ public class JMeterServices {
 
     /**
      * Configures a LoopController with the given loop count and httpSampler.
-     * Alternative to createRunTimeController. Returns null if httpSampler is null.
+     * Returns null if httpSampler is null.
      * @param httpSampler HTTPSampler object representing a request
      * @param loops       Number of iterations
      * @return Covariant LoopController object.
@@ -235,9 +234,9 @@ public class JMeterServices {
 
         SetupThreadGroup ret = new SetupThreadGroup();
 
-        if (testConfig.duration > 0) {
+        if (testConfig.getDuration() > 0) {
             ret.setScheduler(true);
-            ret.setDuration(testConfig.duration);
+            ret.setDuration(testConfig.getDuration());
         }
         ret.setNumThreads(threads);
         ret.setRampUp(rampUp);

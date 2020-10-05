@@ -26,26 +26,12 @@
     </properties>
 
     <dependencies>
-
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        
         <!-- OAS v2 -->
         <!-- https://mvnrepository.com/artifact/io.swagger/swagger-models -->
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-models</artifactId>
-            <version>1.5.22</version>
-        </dependency>
-
-        <!-- OAS v3 -->
-        <dependency>
-            <groupId>io.swagger.parser.v3</groupId>
-            <artifactId>swagger-parser</artifactId>
-            <version>2.0.21</version>
+            <version>1.6.2</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.swagger/swagger-core -->
@@ -55,12 +41,32 @@
             <version>1.6.2</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/io.swagger/swagger-parser -->
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-parser</artifactId>
+            <version>1.0.51</version>
+        </dependency>
+    
+       <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- OAS v3 -->
+        <dependency>
+            <groupId>io.swagger.parser.v3</groupId>
+            <artifactId>swagger-parser</artifactId>
+            <version>2.0.21</version>
+        </dependency>
+
         <!-- Spring/DB -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
-
+    
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -130,6 +136,7 @@
             <artifactId>commons-logging</artifactId>
             <version>1.1.1</version>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -138,7 +145,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-
             <!-- Plugin Needed for Checkstyle to run -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -169,7 +175,7 @@
                 </dependencies>
             </plugin>
             <!-- End of Plugin Needed for Checkstyle to run -->
-
+            
             <!-- Plugin Needed for Jacoco Code Coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
