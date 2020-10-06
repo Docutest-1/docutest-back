@@ -20,7 +20,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Matchers.anyInt;
@@ -30,8 +29,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.revature.docutest.DocutestApplication;
@@ -44,7 +41,7 @@ import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+
 @SpringBootTest(classes = DocutestApplication.class)
 @ContextConfiguration(classes = JMeterService.class)
 class JMeterServiceTest {
@@ -58,7 +55,6 @@ class JMeterServiceTest {
     public static final String DIRECTORY_PATH = "./datafiles";
     @Mock
     private SwaggerSummaryService sss;
-    private MockMvc mockMvc;
 
     @BeforeAll
     static void setUpBeforeClass() throws Exception {

@@ -117,6 +117,7 @@ public class JMeterService {
                 e.printStackTrace();
             }
         }
+        
         SwaggerSummary swaggerSummary = sss.getById(swaggerSummaryId);
         swaggerSummary.setResultsummaries(resultSummaries);
         sss.update(swaggerSummary);
