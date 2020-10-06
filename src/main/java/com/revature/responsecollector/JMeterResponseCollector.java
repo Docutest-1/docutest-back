@@ -48,7 +48,7 @@ public class JMeterResponseCollector extends ResultCollector {
     public double getsuccessFailPercentage() {
         double ratio = 0;
         if (statusCodeCount[1] + statusCodeCount[3] + statusCodeCount[4] != 0) {
-            ratio = ((double) statusCodeCount[1]) / (statusCodeCount[1] + statusCodeCount[3] + statusCodeCount[4]);
+            ratio = ((double) statusCodeCount[1]) / (statusCodeCount[1] + statusCodeCount[3] + statusCodeCount[4]) * 100;
         }
         return ratio;
     }

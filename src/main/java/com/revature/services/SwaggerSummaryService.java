@@ -2,7 +2,6 @@ package com.revature.services;
 
 import java.util.Map;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
 
 import com.revature.models.SwaggerSummary;
 import com.revature.models.SwaggerUploadResponse;
