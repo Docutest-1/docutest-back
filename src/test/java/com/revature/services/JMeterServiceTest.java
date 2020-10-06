@@ -20,8 +20,23 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.when;
 
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.revature.docutest.DocutestApplication;
 import com.revature.docutest.TestUtil;
+import com.revature.models.SwaggerSummary;
 import com.revature.templates.LoadTestConfig;
 
 import io.swagger.models.HttpMethod;
@@ -29,13 +44,21 @@ import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = DocutestApplication.class)
+@ContextConfiguration(classes = JMeterService.class)
 class JMeterServiceTest {
 
+    @Autowired
+    @InjectMocks
     private JMeterService jm;
+    
     private LoadTestConfig loadConfig = new LoadTestConfig();
-    private static final String JMeterPropPath = "src/test/resources/test.properties";
     private static final String CSV_FILE_PATH = "./datafiles/user_0.csv";
     public static final String DIRECTORY_PATH = "./datafiles";
+    @Mock
+    private SwaggerSummaryService sss;
+    private MockMvc mockMvc;
 
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
@@ -52,12 +75,14 @@ class JMeterServiceTest {
         loadConfig.setThreads(10);
         loadConfig.setDuration(-1);
         loadConfig.setTestPlanName("JMeterServicesTest");
-
-        jm = new JMeterService();
+        
         TestUtil.initFields();
 
         File directory = new File(DIRECTORY_PATH);
         deleteFolder(directory);
+        MockitoAnnotations.initMocks(this);
+        
+        when(sss.getById(anyInt())).thenReturn(new SwaggerSummary());
     }
 
     @AfterEach
@@ -69,7 +94,7 @@ class JMeterServiceTest {
         loadConfig.setLoops(2);
         int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
 
-        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
+        jm.loadTesting(TestUtil.get, loadConfig, 1);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             int counter = getCounter(reader);
@@ -87,7 +112,7 @@ class JMeterServiceTest {
         loadConfig.setLoops(2);
         int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
 
-        jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
+        jm.loadTesting(TestUtil.multi, loadConfig, 1);
         for (int i = 0; i < 2; i++) {
             String filename = JMeterService.BASE_FILE_PATH + i + ".csv";
             System.out.println(filename);
@@ -109,7 +134,7 @@ class JMeterServiceTest {
         loadConfig.setDuration(3);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
+        jm.loadTesting(TestUtil.get, loadConfig, 2);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             long diff = getDiff(reader);
@@ -129,7 +154,7 @@ class JMeterServiceTest {
         loadConfig.setDuration(10);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
+        jm.loadTesting(TestUtil.multi, loadConfig, 1);
 
         for (int i = 0; i < 2; i++) {
             String filename = JMeterService.BASE_FILE_PATH + i + ".csv";

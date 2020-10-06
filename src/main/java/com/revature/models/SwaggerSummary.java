@@ -23,7 +23,6 @@ public class SwaggerSummary {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<ResultSummary> resultsummaries = new HashSet<>();
     
-    private long eta;
     
     public SwaggerSummary() {
         super();
@@ -45,11 +44,5 @@ public class SwaggerSummary {
         this.resultsummaries = resultsummaries;
     }
 
-    public long getEta() {
-        return eta;
-    }
 
-    public void setEta(long eta) {
-        this.eta = eta;
-    }
 }
