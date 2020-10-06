@@ -1,7 +1,6 @@
 package com.revature.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.revature.docutest.TestUtil;
 import com.revature.responsecollector.JMeterResponseCollector;
-import com.revature.templates.LoadTestConfig;
 
 class JMeterResponseCollectorTest {
     private JMeterResponseCollector jmrc;

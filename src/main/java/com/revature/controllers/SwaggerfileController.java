@@ -43,11 +43,7 @@ public class SwaggerfileController {
         
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(jsonStream);
-        
-        Swagger swag = new SwaggerParser().read(node);
-        
-        this.jms.createHTTPSampler(swag);
-        
+                
         return ResponseEntity.ok().build();
     }
     

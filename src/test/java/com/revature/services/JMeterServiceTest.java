@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.jmeter.control.LoopController;
@@ -22,12 +21,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.revature.docutest.TestUtil;
+import com.revature.models.SwaggerDocutest;
 import com.revature.templates.LoadTestConfig;
-
-import io.swagger.models.HttpMethod;
-import io.swagger.models.Operation;
-import io.swagger.models.Path;
-import io.swagger.models.Swagger;
 
 class JMeterServiceTest {
 
@@ -35,8 +30,11 @@ class JMeterServiceTest {
     private LoadTestConfig loadConfig = new LoadTestConfig();
     private static final String JMeterPropPath = "src/test/resources/test.properties";
     private static final String CSV_FILE_PATH = "./datafiles/user_0.csv";
-    public static final String DIRECTORY_PATH = "./datafiles";
+    private static final String DIRECTORY_PATH = "./datafiles";
+    private static OASService adapter = new OASService();
 
+    private SwaggerDocutest testSpecs;
+    
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
     }
@@ -66,10 +64,11 @@ class JMeterServiceTest {
 
     @Test
     void testLoadTestingLoop() {
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.get));
         loadConfig.setLoops(2);
         int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
 
-        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
+        jm.loadTesting(testSpecs, loadConfig, JMeterPropPath);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             int counter = getCounter(reader);
@@ -84,10 +83,11 @@ class JMeterServiceTest {
 
     @Test
     void testLoadTestingLoopMultiReq() {
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.multi));
         loadConfig.setLoops(2);
         int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
 
-        jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
+        jm.loadTesting(testSpecs, loadConfig, JMeterPropPath);
         for (int i = 0; i < 2; i++) {
             String filename = JMeterService.BASE_FILE_PATH + i + ".csv";
             System.out.println(filename);
@@ -106,10 +106,11 @@ class JMeterServiceTest {
 
     @Test
     void testLoadTestingDuration() throws IOException {
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.get));
         loadConfig.setDuration(3);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(TestUtil.get, loadConfig, JMeterPropPath);
+        jm.loadTesting(testSpecs, loadConfig, JMeterPropPath);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             long diff = getDiff(reader);
@@ -126,10 +127,11 @@ class JMeterServiceTest {
 
     @Test
     void testLoadTestingDurationMulti() {
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.multi));
         loadConfig.setDuration(10);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(TestUtil.multi, loadConfig, JMeterPropPath);
+        jm.loadTesting(testSpecs, loadConfig, JMeterPropPath);
 
         for (int i = 0; i < 2; i++) {
             String filename = JMeterService.BASE_FILE_PATH + i + ".csv";
@@ -138,6 +140,7 @@ class JMeterServiceTest {
                 long expectedDuration = loadConfig.getDuration() * 1000;
                 System.out.println(
                         "Difference between expected and actual duration (ms): " + Math.abs(expectedDuration - diff));
+                System.out.println(diff);
                 // flat amount + 5% of duration in ms
                 assertTrue(Math.abs((expectedDuration) - diff) < (2000 + (loadConfig.getDuration() * 1000 / 20)));
             } catch (IOException e) {
@@ -150,30 +153,34 @@ class JMeterServiceTest {
 
     @Test
     void testHttpSamplerDistinctRequestCount() {
-        Set<HTTPSampler> samplers = jm.createHTTPSampler(TestUtil.get);
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.get));
+        Set<HTTPSampler> samplers = jm.createHTTPSampler(testSpecs);
         assertEquals(1, samplers.size());
-        samplers = jm.createHTTPSampler(TestUtil.todos);
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.todos));
+        samplers = jm.createHTTPSampler(testSpecs);
         assertEquals(7, samplers.size());
     }
 
     @Test
     void testHttpSamplerEndpoints() {
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.get));
         // get.json
         Set<String> expected = new HashSet<>();
         expected.add("/");
-        Set<HTTPSampler> samplers = jm.createHTTPSampler(TestUtil.get);
+        Set<HTTPSampler> samplers = jm.createHTTPSampler(testSpecs);
         for (HTTPSampler sampler : samplers) {
             assertTrue(expected.contains(sampler.getPath()));
         }
-
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.todos));
         // todos.json
         expected.clear();
         expected.add("/todos");
         expected.add("/todos/truncate");
-        expected.add("/todos/1"); // needs to be changed once path var is implemented
-        samplers = jm.createHTTPSampler(TestUtil.todos);
+        expected.add("/todos/{id}"); // TODO needs to be changed once path var is implemented
+        samplers = jm.createHTTPSampler(testSpecs);
 
         for (HTTPSampler sampler : samplers) {
+            System.out.println(sampler.getPath());
             assertTrue(expected.contains(sampler.getPath()));
         }
     }
@@ -185,17 +192,20 @@ class JMeterServiceTest {
 
     @Test
     void testHttpSamplerNoReq() {
-        assertEquals(0, jm.createHTTPSampler(TestUtil.blank).size());
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.blank));
+        assertEquals(0, jm.createHTTPSampler(testSpecs).size());
     }
 
     @Test
     void testHttpSamplerNoHost() {
-        assertEquals(0, jm.createHTTPSampler(TestUtil.malformed).size());
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.malformed));
+        assertEquals(0, jm.createHTTPSampler(testSpecs).size());
     }
 
     @Test
     void testCreateLoopController() {
-        Set<HTTPSampler> samplerSet = jm.createHTTPSampler(TestUtil.todos);
+        testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.todos));
+        Set<HTTPSampler> samplerSet = jm.createHTTPSampler(testSpecs);
         for (HTTPSampler element : samplerSet) {
             LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.getLoops());
             assertEquals(loadConfig.getLoops(), testLC.getLoops());
@@ -207,32 +217,6 @@ class JMeterServiceTest {
     @Test
     void testCreateLoopControllerNull() {
         assertNull(jm.createLoopController(null, loadConfig.getLoops()));
-    }
-
-    @Test
-    void testParseURL() {
-        String expected = "/todos/1";
-
-        Swagger swag = TestUtil.todos;
-        String basePath = swag.getBasePath();
-        Map<String, Path> endpoints = swag.getPaths();
-        for (String path : endpoints.keySet()) {
-            Path pathOperations = endpoints.get(path);
-            Map<HttpMethod, Operation> verbs = pathOperations.getOperationMap();
-            for (HttpMethod verb : verbs.keySet()) {
-                if (basePath.equals("/")) {
-                    basePath = "";
-                }
-                String fullPath = basePath + path;
-
-                String parsedURL = jm.parseURL(fullPath, verbs);
-
-                // Assertion here
-                if (fullPath.equals("/todos/{id}")) {
-                    assertEquals(expected, parsedURL);
-                }
-            }
-        }
     }
 
     // helper method to clear folder between each test
