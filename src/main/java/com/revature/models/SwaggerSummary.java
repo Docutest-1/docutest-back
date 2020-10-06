@@ -2,7 +2,9 @@ package com.revature.models;
 
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -18,14 +20,13 @@ public class SwaggerSummary {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     
-    @OneToMany(mappedBy = "swaggerSummary")
-    private Set<ResultSummary> resultsummaries;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Set<ResultSummary> resultsummaries = new HashSet<>();
     
     private long eta;
     
     public SwaggerSummary() {
         super();
-        this.resultsummaries = new HashSet<>();
     }
 
     public int getId() {

@@ -4,11 +4,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Sets;
 import com.revature.models.ResultSummary;
 import com.revature.models.SwaggerSummary;
 import com.revature.services.JMeterService;
@@ -29,11 +35,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-
-
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
@@ -41,38 +46,71 @@ public class SwaggerfileController {
 
     @Autowired
     private JMeterService jms;
-    
     @Autowired
     private SwaggerSummaryService swaggerSummaryService;
-    
     @Autowired
     private ResultSummaryService resultSummaryService;
+    @Autowired
+    private EntityManager entityManager;
     
     @PostMapping("/upload")
     public ResponseEntity<Void> uploadSwaggerFile(@RequestParam("file") MultipartFile file) throws IOException, URISyntaxException {
         // TESTING PURPOSES
         SwaggerSummary s = swaggerSummaryService.insert();
-        ResultSummary rs = new ResultSummary(new URI("/test"), "GET", 100, 25, 80, 126, 175, 10, 90, 20, "s3.aws.com/dfdfdfs.csv");
         
-        s.getResultsummaries().add(rs);
+        swaggerSummaryService.update(s);
         
-        resultSummaryService.insert(rs);
-        // *****************************
-        
-//        System.out.println("Filename: " + file.getOriginalFilename() + "\n");
-//        
-//        InputStream jsonStream = file.getInputStream();
-//        
-//        ObjectMapper mapper = new ObjectMapper();
-//        JsonNode node = mapper.readTree(jsonStream);
-        
-//        Swagger swag = new SwaggerParser().read(node);
-        
-//        this.jms.createHTTPSampler(swag);
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                test(s.getId());
+            } catch (URISyntaxException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        });
         
         return ResponseEntity.ok().build();
     }
     
+    @GetMapping("/get")
+    public ResponseEntity<Void> getSwaggerSummary(@RequestParam int id) throws IOException, URISyntaxException {
+        
+        SwaggerSummary s = swaggerSummaryService.getById(id);
+        if (s == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Set<ResultSummary> rs = s.getResultsummaries();
+        
+        for (ResultSummary r : rs) {
+            System.out.println(r);
+        }
+        
+        return ResponseEntity.ok().build();
+    }
+    
+    private void test(int swaggerSummaryId) throws URISyntaxException {
+        
+        SwaggerSummary ss1;
+        
+        ResultSummary rs = new ResultSummary(new URI("/test"), "POST", 90, 23, 78, 130, 167, 10, 90, 20, "s3.aws.com/dfdfdfs4.csv");
+        ResultSummary rs2 = new ResultSummary(new URI("/test"), "GET", 100, 25, 80, 126, 175, 10, 90, 20, "s3.aws.com/dfdfdfs5.csv");
+        List<ResultSummary> resultSummaries = new ArrayList<>();
+        resultSummaries.add(rs);
+        resultSummaries.add(rs2);
+        
+        for (ResultSummary r : resultSummaries) {
+            ss1 = swaggerSummaryService.getById(swaggerSummaryId);
+            
+            System.out.println("PROCESSING");
+            for (int i = 0; i < 1000000000; i++) {}
+            System.out.println("DONE");
+            
+            ss1.getResultsummaries().add(r);
+            swaggerSummaryService.update(ss1);
+        }
+        
+    }
+
     // ----------------------- Troubleshooting/test/debug methods ------------------------------
     // TODO remove when no longer needed
     private static void printOperations(Swagger swag, Map<HttpMethod, Operation> operationMap) {

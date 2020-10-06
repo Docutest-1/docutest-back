@@ -1,7 +1,9 @@
 package com.revature.models;
 
 import java.net.URI;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -11,8 +13,6 @@ import javax.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.revature.responsecollector.JMeterResponseCollector;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 
 
 @EqualsAndHashCode
@@ -22,12 +22,7 @@ public class ResultSummary {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    
-    @ManyToOne
-    @JoinColumn(name = "swagger_summary_id")
-    @JsonIgnore
-    private SwaggerSummary swaggerSummary;
-    
+        
     private URI uri;
     private String httpMethod;
     private long responseAvg;
@@ -41,7 +36,6 @@ public class ResultSummary {
     private String dataReference;
     
     public ResultSummary() {
-        super();
     }
     
     public ResultSummary(URI uri, String httpMethod, long responseAvg,
@@ -169,12 +163,13 @@ public class ResultSummary {
         this.dataReference = dataReference;
     }
 
-    public SwaggerSummary getSwaggerSummary() {
-        return swaggerSummary;
-    }
-
-    public void setSwaggerSummary(SwaggerSummary swaggerSummary) {
-        this.swaggerSummary = swaggerSummary;
+    @Override
+    public String toString() {
+        return "ResultSummary [id=" + id + ", uri=" + uri + ", httpMethod=" + httpMethod + ", responseAvg="
+                + responseAvg + ", response25Percentile=" + response25Percentile + ", response50Percentile="
+                + response50Percentile + ", response75Percentile=" + response75Percentile + ", responseMax="
+                + responseMax + ", failCount=" + failCount + ", successFailPercentage=" + successFailPercentage
+                + ", reqPerSec=" + reqPerSec + ", dataReference=" + dataReference + "]";
     }
     
 }
