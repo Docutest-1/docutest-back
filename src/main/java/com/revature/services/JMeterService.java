@@ -7,6 +7,7 @@ import java.util.Set;
 import com.revature.models.Docutest;
 import com.revature.models.Request;
 import com.revature.models.ResultSummary;
+import com.revature.models.SwaggerSummary;
 import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
 import org.apache.jmeter.control.LoopController;
@@ -18,6 +19,7 @@ import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.SetupThreadGroup;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
@@ -32,10 +34,13 @@ public class JMeterService {
 
     // replace user with username later
     public static final String BASE_FILE_PATH = "./datafiles/user_";
+    
+    public static final String PROPERTIES_PATH = "src/main/resources/test.properties";
 
     private LoadTestConfig testConfig = new LoadTestConfig();
-
-    private Set<ResultSummary> resultSummaries = new HashSet<>();
+    
+    @Autowired
+    private SwaggerSummaryService sss;
 
     /**
      * Runs the JMeter test using a Docutest object, test configuration, and JMeter
@@ -47,11 +52,13 @@ public class JMeterService {
      * @param testConfig     LoadTestConfig object with test settings
      * @param propertiesPath File path to the properties JMeter Properties file
      */
-    public void loadTesting(Docutest input, LoadTestConfig testConfig, String propertiesPath) {
+    public void loadTesting(Swagger swag, LoadTestConfig testConfig, int swaggerSummaryId) {
+        Set<ResultSummary> resultSummaries = new HashSet<>();
+        
         this.testConfig = testConfig;
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
-        JMeterUtils.loadJMeterProperties(propertiesPath);
+        JMeterUtils.loadJMeterProperties(PROPERTIES_PATH);
         JMeterUtils.initLocale();
 
         // create set of all unique HTTP requests as defined in swagger
@@ -111,7 +118,11 @@ public class JMeterService {
                 e.printStackTrace();
             }
         }
-//        TODO save resultsummaries to Hibernate
+        
+        SwaggerSummary swaggerSummary = sss.getById(swaggerSummaryId);
+        swaggerSummary.setResultsummaries(resultSummaries);
+        sss.update(swaggerSummary);
+        
     }
 
     /**

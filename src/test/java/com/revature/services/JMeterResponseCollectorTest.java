@@ -155,7 +155,7 @@ class JMeterResponseCollectorTest {
     void testgetsuccessFailPercentage() {
         jmrc.sampleOccurred(sampleEvents.get(0));
         jmrc.sampleOccurred(sampleEvents.get(1));
-        float expected = 0.5f;
+        float expected = 50f;
         assertEquals(expected, jmrc.getsuccessFailPercentage());
     }
     

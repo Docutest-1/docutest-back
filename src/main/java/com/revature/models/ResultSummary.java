@@ -1,16 +1,11 @@
 package com.revature.models;
 
 import java.net.URI;
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.revature.responsecollector.JMeterResponseCollector;
 import lombok.EqualsAndHashCode;
 
@@ -38,20 +33,19 @@ public class ResultSummary {
     public ResultSummary() {
     }
     
-    public ResultSummary(URI uri, String httpMethod, long responseAvg,
-            long response25Percentile, long response50Percentile, long response75Percentile, long responseMax,
-            int failCount, double successFailPercentage, double reqPerSec, String dataReference) {
+    
+    public ResultSummary(URI uri, String httpMethod, JMeterResponseCollector logger, String dataReference) {
         super();
         this.uri = uri;
         this.httpMethod = httpMethod;
-        this.responseAvg = responseAvg;
-        this.response25Percentile = response25Percentile;
-        this.response50Percentile = response50Percentile;
-        this.response75Percentile = response75Percentile;
-        this.responseMax = responseMax;
-        this.failCount = failCount;
-        this.successFailPercentage = successFailPercentage;
-        this.reqPerSec = reqPerSec;
+        responseAvg = logger.getResponseAvg();
+        response25Percentile = logger.getResponse25Percentile();
+        response50Percentile = logger.getResponse50Percentile();
+        response75Percentile = logger.getResponse75Percentile();
+        responseMax = logger.getResponseMax();
+        failCount = (logger.getNum4XX() + logger.getNum5XX());
+        successFailPercentage = logger.getsuccessFailPercentage();
+        reqPerSec = logger.getReqPerSec();
         this.dataReference = dataReference;
     }
     
