@@ -38,7 +38,7 @@ public class JMeterService {
     // replace user with username later
     public static final String BASE_FILE_PATH = "./datafiles/user_";
     
-    public static final String PROPERTIES_PATH = "src/test/resources/test.properties";
+    public static final String PROPERTIES_PATH = "src/main/resources/test.properties";
 
     private LoadTestConfig testConfig = new LoadTestConfig();
     
