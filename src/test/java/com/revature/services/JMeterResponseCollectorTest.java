@@ -21,8 +21,8 @@ import com.revature.responsecollector.JMeterResponseCollector;
 class JMeterResponseCollectorTest {
     private JMeterResponseCollector jmrc;
     private StandardJMeterEngine engine;
-    private static final String JMeterPropPath = "src/test/resources/test.properties";
-
+    private static final String JMeterPropPath = "src/main/resources/jmeter.properties";
+    
     private static List<SampleEvent> sampleEvents = new ArrayList<>();
     
     @BeforeAll

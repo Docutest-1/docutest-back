@@ -10,9 +10,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
-import lombok.EqualsAndHashCode;
+import lombok.Data;
 
-@EqualsAndHashCode
+@Data
 @Entity
 public class SwaggerSummary {
     
@@ -29,72 +29,4 @@ public class SwaggerSummary {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<ResultSummary> resultsummaries = new HashSet<>();
     
-    public SwaggerSummary() {
-        super();
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public Set<ResultSummary> getResultsummaries() {
-        return resultsummaries;
-    }
-
-    public void setResultsummaries(Set<ResultSummary> resultsummaries) {
-        this.resultsummaries = resultsummaries;
-    }
-
-    public String getTestPlanName() {
-        return testPlanName;
-    }
-
-    public void setTestPlanName(String testPlanName) {
-        this.testPlanName = testPlanName;
-    }
-
-    public int getLoops() {
-        return loops;
-    }
-
-    public void setLoops(int loops) {
-        this.loops = loops;
-    }
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
-
-    public int getThreads() {
-        return threads;
-    }
-
-    public void setThreads(int threads) {
-        this.threads = threads;
-    }
-
-    public int getRampUp() {
-        return rampUp;
-    }
-
-    public void setRampUp(int rampUp) {
-        this.rampUp = rampUp;
-    }
-
-    public boolean isFollowRedirects() {
-        return followRedirects;
-    }
-
-    public void setFollowRedirects(boolean followRedirects) {
-        this.followRedirects = followRedirects;
-    }
-
 }

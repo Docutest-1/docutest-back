@@ -37,6 +37,7 @@ build/
 bin/
 # log folder
 logs/
+.metadata
 
 # CSV file of results
 datafiles/*.csv

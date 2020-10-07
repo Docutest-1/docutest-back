@@ -35,7 +35,7 @@ public class JMeterService {
     // replace user with username later
     public static final String BASE_FILE_PATH = "./datafiles/user_";
     
-    public static final String PROPERTIES_PATH = "src/main/resources/test.properties";
+    public static final String PROPERTIES_PATH = "src/main/resources/jmeter.properties";
 
     private LoadTestConfig testConfig = new LoadTestConfig();
     
@@ -52,7 +52,7 @@ public class JMeterService {
      * @param testConfig     LoadTestConfig object with test settings
      * @param propertiesPath File path to the properties JMeter Properties file
      */
-    public void loadTesting(Swagger swag, LoadTestConfig testConfig, int swaggerSummaryId) {
+    public void loadTesting(Docutest input, LoadTestConfig testConfig, int swaggerSummaryId) {
         Set<ResultSummary> resultSummaries = new HashSet<>();
         
         this.testConfig = testConfig;
@@ -108,9 +108,7 @@ public class JMeterService {
                 jm.run();
                 hashTree.clear();
 
-                ResultSummary resultSummary = new ResultSummary(logger);
-                resultSummary.setHttpMethod(element.getMethod());
-                resultSummary.setUri(element.getUrl().toURI());
+                ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger, null);
                 // TODO file upload to S3 here
                 resultSummaries.add(resultSummary);
             } catch (Exception e) {

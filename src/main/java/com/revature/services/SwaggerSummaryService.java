@@ -1,7 +1,6 @@
 package com.revature.services;
 
 import java.util.Map;
-import javax.persistence.EntityManager;
 
 import com.revature.models.SwaggerSummary;
 import com.revature.models.SwaggerUploadResponse;
@@ -20,23 +19,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class SwaggerSummaryService {
 
     @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
     private SwaggerSummaryRepository repository;
 
-    public SwaggerSummary insert() {
+    public SwaggerSummaryService(SwaggerSummaryRepository mockedDao) {
+        repository = mockedDao;
+    }
 
+    public SwaggerSummary newSummary() {
         SwaggerSummary s = new SwaggerSummary();
-
         return repository.save(s);
 
     }
 
-    public void update(SwaggerSummary s) {
+    public boolean update(SwaggerSummary s) {
+        SwaggerSummary saved = repository.save(s);
+        return saved.equals(s);
 
-        repository.save(s);
-
+    }
+    
+    public boolean delete(SwaggerSummary s) {
+        repository.delete(s);
+        return !repository.existsById(s.getId());
     }
 
     public SwaggerSummary getById(int id) {
@@ -45,7 +48,7 @@ public class SwaggerSummaryService {
 
     public SwaggerUploadResponse uploadSwaggerfile(Swagger swag, LoadTestConfig ltc) {
         SwaggerUploadResponse sur = new SwaggerUploadResponse();
-        SwaggerSummary s = this.insert();
+        SwaggerSummary s = this.newSummary();
 
         s.setDuration(ltc.getDuration());
         s.setFollowRedirects(ltc.isFollowRedirects());

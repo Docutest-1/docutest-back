@@ -32,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.revature.docutest.DocutestApplication;
 import com.revature.docutest.TestUtil;
+import com.revature.models.SwaggerDocutest;
 import com.revature.models.SwaggerSummary;
 import com.revature.templates.LoadTestConfig;
 
@@ -54,7 +55,8 @@ class JMeterServiceTest {
     public static final String DIRECTORY_PATH = "./datafiles";
     @Mock
     private SwaggerSummaryService sss;
-
+    
+    private OASService adapter = new OASService();
     private SwaggerDocutest testSpecs;
     
     @BeforeAll
@@ -92,7 +94,7 @@ class JMeterServiceTest {
         loadConfig.setLoops(2);
         int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
 
-        jm.loadTesting(TestUtil.get, loadConfig, 1);
+        jm.loadTesting(testSpecs, loadConfig, 1);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             int counter = getCounter(reader);
@@ -111,7 +113,7 @@ class JMeterServiceTest {
         loadConfig.setLoops(2);
         int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
 
-        jm.loadTesting(TestUtil.multi, loadConfig, 1);
+        jm.loadTesting(testSpecs, loadConfig, 1);
         for (int i = 0; i < 2; i++) {
             String filename = JMeterService.BASE_FILE_PATH + i + ".csv";
             System.out.println(filename);
@@ -134,7 +136,7 @@ class JMeterServiceTest {
         loadConfig.setDuration(3);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(TestUtil.get, loadConfig, 2);
+        jm.loadTesting(testSpecs, loadConfig, 2);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             long diff = getDiff(reader);
@@ -155,7 +157,7 @@ class JMeterServiceTest {
         loadConfig.setDuration(10);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(TestUtil.multi, loadConfig, 1);
+        jm.loadTesting(testSpecs, loadConfig, 1);
 
         for (int i = 0; i < 2; i++) {
             String filename = JMeterService.BASE_FILE_PATH + i + ".csv";

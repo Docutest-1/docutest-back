@@ -7,17 +7,16 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 import com.revature.responsecollector.JMeterResponseCollector;
-import lombok.EqualsAndHashCode;
+import lombok.Data;
 
-
-@EqualsAndHashCode
+@Data
 @Entity
 public class ResultSummary {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-        
+    
     private URI uri;
     private String httpMethod;
     private long responseAvg;
@@ -33,7 +32,6 @@ public class ResultSummary {
     public ResultSummary() {
     }
     
-    
     public ResultSummary(URI uri, String httpMethod, JMeterResponseCollector logger, String dataReference) {
         super();
         this.uri = uri;
@@ -47,123 +45,6 @@ public class ResultSummary {
         successFailPercentage = logger.getsuccessFailPercentage();
         reqPerSec = logger.getReqPerSec();
         this.dataReference = dataReference;
-    }
-    
-    public ResultSummary(JMeterResponseCollector logger) {
-        super();
-        responseAvg = logger.getResponseAvg();
-        response25Percentile = logger.getResponse25Percentile();
-        response50Percentile = logger.getResponse50Percentile();
-        response75Percentile = logger.getResponse75Percentile();
-        responseMax = logger.getResponseMax();
-        failCount = (logger.getNum4XX() + logger.getNum5XX());
-        successFailPercentage = logger.getsuccessFailPercentage();
-        reqPerSec = logger.getReqPerSec();
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public URI getUri() {
-        return uri;
-    }
-
-    public void setUri(URI uri) {
-        this.uri = uri;
-    }
-
-    public String getHttpMethod() {
-        return httpMethod;
-    }
-
-    public void setHttpMethod(String httpMethod) {
-        this.httpMethod = httpMethod;
-    }
-
-    public long getResponseAvg() {
-        return responseAvg;
-    }
-
-    public void setResponseAvg(long responseAvg) {
-        this.responseAvg = responseAvg;
-    }
-
-    public long getResponse25Percentile() {
-        return response25Percentile;
-    }
-
-    public void setResponse25Percentile(long response25Percentile) {
-        this.response25Percentile = response25Percentile;
-    }
-
-    public long getResponse50Percentile() {
-        return response50Percentile;
-    }
-
-    public void setResponse50Percentile(long response50Percentile) {
-        this.response50Percentile = response50Percentile;
-    }
-
-    public long getResponse75Percentile() {
-        return response75Percentile;
-    }
-
-    public void setResponse75Percentile(long response75Percentile) {
-        this.response75Percentile = response75Percentile;
-    }
-
-    public long getResponseMax() {
-        return responseMax;
-    }
-
-    public void setResponseMax(long responseMax) {
-        this.responseMax = responseMax;
-    }
-
-    public int getFailCount() {
-        return failCount;
-    }
-
-    public void setFailCount(int failCount) {
-        this.failCount = failCount;
-    }
-
-    public double getSuccessFailPercentage() {
-        return successFailPercentage;
-    }
-
-    public void setSuccessFailPercentage(double successFailPercentage) {
-        this.successFailPercentage = successFailPercentage;
-    }
-
-    public double getReqPerSec() {
-        return reqPerSec;
-    }
-
-    public void setReqPerSec(double reqPerSec) {
-        this.reqPerSec = reqPerSec;
-    }
-
-    public String getDataReference() {
-        return dataReference;
-    }
-
-    public void setDataReference(String dataReference) {
-        this.dataReference = dataReference;
-    }
-
-    @Override
-    public String toString() {
-        return "ResultSummary [id=" + id + ", uri=" + uri + ", httpMethod=" + httpMethod + ", responseAvg="
-                + responseAvg + ", response25Percentile=" + response25Percentile + ", response50Percentile="
-                + response50Percentile + ", response75Percentile=" + response75Percentile + ", responseMax="
-                + responseMax + ", failCount=" + failCount + ", successFailPercentage=" + successFailPercentage
-                + ", reqPerSec=" + reqPerSec + ", dataReference=" + dataReference + "]";
     }
     
 }
