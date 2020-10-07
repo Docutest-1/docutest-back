@@ -25,18 +25,33 @@ public class SwaggerSummaryService {
     @Autowired
     private SwaggerSummaryRepository repository;
 
-    public SwaggerSummary insert() {
+    public SwaggerSummaryService(SwaggerSummaryRepository mockedDao) {
+        repository = mockedDao;
+    }
 
+    public SwaggerSummary newSummary() {
         SwaggerSummary s = new SwaggerSummary();
-
         return repository.save(s);
 
     }
 
-    public void update(SwaggerSummary s) {
+    public boolean update(SwaggerSummary s) {
+        SwaggerSummary saved = repository.save(s);
+        if (saved != null && saved.equals(s)) {
+            return true;
+        } else {
+            return false;
+        }
 
-        repository.save(s);
-
+    }
+    
+    public boolean delete(SwaggerSummary s) {
+        repository.delete(s);
+        if (repository.existsById(s.getId()) == false) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public SwaggerSummary getById(int id) {
@@ -45,7 +60,7 @@ public class SwaggerSummaryService {
 
     public SwaggerUploadResponse uploadSwaggerfile(Swagger swag, LoadTestConfig ltc) {
         SwaggerUploadResponse sur = new SwaggerUploadResponse();
-        SwaggerSummary s = this.insert();
+        SwaggerSummary s = this.newSummary();
 
         s.setDuration(ltc.getDuration());
         s.setFollowRedirects(ltc.isFollowRedirects());
