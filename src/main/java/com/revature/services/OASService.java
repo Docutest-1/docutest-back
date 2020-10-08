@@ -17,6 +17,7 @@ import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.RefProperty;
+import org.apache.jmeter.protocol.http.control.Header;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -78,11 +79,11 @@ public class OASService {
 
                         req.setEndpoint(endpoint);
                         req.setVerb(operationEntry.getKey());
-
-                        List<Parameter> params = operationEntry.getValue().getParameters();
+                        
+                        Operation operation = operationEntry.getValue();
 
                         // fill out param info
-                        setParams(req, params, input.getDefinitions());
+                        setParams(req, operation, input.getDefinitions());
 
                         requests.add(req);
                     }
@@ -93,14 +94,22 @@ public class OASService {
     }
 
     // ------------------------------- HELPER METHODS ------------------------------
-    public void setParams(Request req, List<Parameter> params, Map<String, Model> definitions) {
+    public void setParams(Request req, Operation operation, Map<String, Model> definitions) {
+        List<Parameter> params = operation.getParameters();
         for (Parameter param : params) {
             // doesn't seem to be any requirements for indices, so we need to check if
-            // parameter
-            // is an instance of BodyParam/HeaderParam/etc
+            // parameter is an instance of BodyParam/HeaderParam/etc
             if (param instanceof BodyParameter) {
                 String body = createBody((BodyParameter) param, definitions);
                 req.setBody(body);
+                
+                if (operation.getConsumes() == null) {
+                    // default to json
+                    setContentType(req, "application/json");
+                } else {
+                    setContentType(req, operation.getConsumes().get(0));
+                }
+                
             } else if (param instanceof PathParameter) {
                 // TODO set path params
             }
@@ -135,6 +144,10 @@ public class OASService {
         }
 
         return jsonBody;
+    }
+    
+    private void setContentType(Request req, String type) {
+        req.getHeaderParams().add(new Header("Content-Type", type));
     }
 
 }

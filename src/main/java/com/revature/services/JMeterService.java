@@ -13,7 +13,10 @@ import com.revature.templates.LoadTestConfig;
 import io.swagger.models.HttpMethod;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.engine.StandardJMeterEngine;
-import org.apache.jmeter.protocol.http.sampler.HTTPSampler;
+import org.apache.jmeter.protocol.http.control.Header;
+import org.apache.jmeter.protocol.http.control.HeaderManager;
+import org.apache.jmeter.protocol.http.gui.HeaderPanel;
+import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jmeter.reporters.Summariser;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jmeter.testelement.TestPlan;
@@ -27,7 +30,7 @@ import org.springframework.stereotype.Service;
 public class JMeterService {
 
     // Object representing the config for the JMeter test
-    // At the very least, requires a TestPlan, HTTPSampler, and ThreadGroup
+    // At the very least, requires a TestPlan, HTTPSamplerProxy, and ThreadGroup
     // Test Elements can be nested within each other
     private HashTree hashTree = new HashTree();
 
@@ -61,13 +64,13 @@ public class JMeterService {
         JMeterUtils.initLocale();
 
         // create set of all unique HTTP requests as defined in swagger
-        Set<HTTPSampler> httpSampler = this.createHTTPSampler(input);
+        Set<HTTPSamplerProxy> httpSampler = this.createHTTPSamplerProxy(input);
 
         int reqNumber = 0;
 
         // run a separate load test for each req since we want individual CSV/summaries
         // for each
-        for (HTTPSampler element : httpSampler) {
+        for (HTTPSamplerProxy element : httpSampler) {
             // use TestElement since we may not always want LoopController
             TestElement logicController = createLoopController(element, testConfig.getLoops());
 
@@ -77,9 +80,23 @@ public class JMeterService {
             TestPlan testPlan = new TestPlan(testConfig.getTestPlanName());
             testPlan.setProperty(TestElement.TEST_CLASS, TestPlan.class.getName());
 
-            hashTree.add("testPlan", testPlan);
-            hashTree.add("setupThreadGroup", threadGroup);
-            hashTree.add("httpSampler", element);
+            // set content type
+            HeaderManager manager = new HeaderManager();
+            manager.add(new Header("Content-Type", "application/json"));
+            manager.setName(JMeterUtils.getResString("header_manager_title"));
+            manager.setProperty(TestElement.TEST_CLASS, HeaderManager.class.getName());
+            manager.setProperty(TestElement.GUI_CLASS, HeaderPanel.class.getName());
+            
+            // add headers
+            element.setHeaderManager(manager);
+            
+            hashTree.add(testPlan);
+            HashTree samplerTree = new HashTree();
+            samplerTree.add(element, manager);
+            
+            HashTree threadGroupTree = new HashTree();
+            threadGroupTree = hashTree.add(testPlan, threadGroup);
+            threadGroupTree.add(samplerTree);
 
             jm.configure(hashTree);
 
@@ -124,36 +141,31 @@ public class JMeterService {
 
     /**
      * For OAS 2.0. Parses HTTP request conditions from Docutest input and generates
-     * an array of HTTPSampler objects based the requests field.
+     * an array of HTTPSamplerProxy objects based the requests field.
      * 
      * @param input Docutest object
-     * @return Set of HTTPSampler objects. Returns an empty set if there are no
+     * @return Set of HTTPSamplerProxy objects. Returns an empty set if there are no
      *         endpoints. Returns null if there is a problem with the Swagger input.
      */
-    public Set<HTTPSampler> createHTTPSampler(Docutest input) {
-        Set<HTTPSampler> httpSamplers = new HashSet<>();
+    public Set<HTTPSamplerProxy> createHTTPSamplerProxy(Docutest input) {
+        Set<HTTPSamplerProxy> httpSamplers = new HashSet<>();
         if (input != null) {
             List<Request> requests = input.getRequests();
             // each verb/operation
             for (Request req : requests) {
-                HTTPSampler element = new HTTPSampler();
+                HTTPSamplerProxy element = new HTTPSamplerProxy();
 
-                // domain
                 element.setDomain(req.getEndpoint().getBaseUrl());
-                // port
                 element.setPort(req.getEndpoint().getPort());
                 String path = removeEmptyPath(req.getEndpoint().getBasePath(), req.getEndpoint().getPath());
-                // may want to use enum, also might need to be a setting later
-                element.setProtocol("http");
                 element.setPath(path);
                 element.setMethod(req.getVerb().toString());
                 element.setFollowRedirects(true);
                 
                 if (requiresBody(req.getVerb())) {
                     element.setPostBodyRaw(true);
-                    element.addNonEncodedArgument("", req.getBody(), "application/json");
+                    element.addNonEncodedArgument("", req.getBody(), "");
                 }
-
                 httpSamplers.add(element);
             }
         }
@@ -164,11 +176,11 @@ public class JMeterService {
      * Configures a LoopController with the given loop count and httpSampler.
      * Returns null if httpSampler is null.
      * 
-     * @param httpSampler HTTPSampler object representing a request
+     * @param httpSampler HTTPSamplerProxy object representing a request
      * @param loops       Number of iterations
      * @return Covariant LoopController object.
      */
-    public TestElement createLoopController(HTTPSampler httpSampler, int loops) {
+    public TestElement createLoopController(HTTPSamplerProxy httpSampler, int loops) {
         if (httpSampler != null) {
             TestElement loopCtrl = new LoopController();
             ((LoopController) loopCtrl).setLoops(loops);

@@ -3,6 +3,8 @@ package com.revature.docutest;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.jmeter.protocol.http.control.Header;
+
 import com.revature.models.Endpoint;
 import com.revature.models.Request;
 
@@ -27,32 +29,39 @@ public class TestUtil {
     public static List<Request> postReq;
     public static List<Request> getReqMulti;
     
-    public static final String TODO_JSON = "{" +
+    // technically not JSON directly, but regex to account for auto id
+    public static final String TODO_JSON_REGEX = "\\{" +
             "\"completed\" : \"false\"," +
             "\"createdOn\" : \"\"," +
-            "\"id\" : \"0\"," +
+            "\"id\" : \".*\"," +
             "\"title\" : \"\"," +
-            "}";
-    public static final String PET_JSON = "{" +
-            "\"id\" : \"0\"," +
-            "\"category\" : {" +
-                "\"id\" : \"0\"," +
+            "\\}";
+    public static final String PET_JSON_REGEX = "\\{" +
+            "\"id\" : \".*\"," +
+            "\"category\" : \\{" +
+                "\"id\" : \".*\"," +
                 "\"name\" : \"\"," +
-                "}," +
+                "\\}," +
             "\"name\" : \"\"," +
-            "\"photoUrls\": []," +
-            "\"tags\": [" + 
-                "{" +
-                    "\"id\":\"0\"," +
+            "\"photoUrls\": \\[\\]," +
+            "\"tags\": \\[" + 
+                "\\{" +
+                    "\"id\":\".*\"," +
                     "\"name\":\"\"," +
-                "}" +
-            "]," + 
+                "\\}" +
+            "\\]," + 
             "\"status\" : \"\"," +
-            "}";
+            "\\}";
+    
+    public static final String POST_OBJ_JSON_REGEX = "\\{" +
+            "\"id\" : \".*\"," +
+            "\"field1\" : \"\",\\}";
     
     public static final String POST_OBJ_JSON = "{" +
-            "\"id\" : \"0\"," +
-            "\"field1\" : \"\",}";
+            "\"id\" : \"1\"," +
+            "\"field1\" : \"\"," +
+            "\"field2\" : [0]," +
+            "}";
 
     static {
         initFields();
@@ -103,6 +112,7 @@ public class TestUtil {
         req.setEndpoint(endpoint);
         req.setVerb(HttpMethod.POST);
         req.setBody(POST_OBJ_JSON);
+        req.getHeaderParams().add(new Header("Content-Type", "application/json"));
         postReq = new ArrayList<>();
         postReq.add(req);
     }

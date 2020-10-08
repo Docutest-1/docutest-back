@@ -13,6 +13,9 @@
     "paths": {
         "/": {
             "post": {
+                "consumes" : [
+                    "application/json"
+                ],
                 "parameters" : [
                     {
                         "in" : "body",
@@ -39,6 +42,13 @@
                 },
                 "field1" : {
                     "type" : "string"
+                },
+                "field2" : {
+                	"type" : "array",
+                	"items": {
+              			"type": "integer",
+              			"format": "int32"
+              		}
                 }
             }
         }

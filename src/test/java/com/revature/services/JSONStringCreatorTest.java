@@ -46,19 +46,17 @@ class JSONStringCreatorTest {
     @Test
     void testDefaultStringTodo() {
         json = jsonCreator.createDefaultJSONString("Todo", todosDefinitions);
-        String todoJSON = TestUtil.TODO_JSON.replaceAll("\\s","");
+        String todoJSONregex = TestUtil.TODO_JSON_REGEX.replaceAll("\\s","");
         json = json.replaceAll("\\s","");
-        assertEquals(todoJSON, json);
+        assertTrue(json.matches(todoJSONregex));
     }
     
     @Test
     void testDefaultStringPetNested() {
-        String petJSON = TestUtil.PET_JSON.replaceAll("\\s","");
+        String petJSONregex = TestUtil.PET_JSON_REGEX.replaceAll("\\s","");
         json = jsonCreator.createDefaultJSONString("Pet", petstoreDefinitions);
         json = json.replaceAll("\\s","");
-        System.out.println(petJSON);
-        System.out.println(json);
-        assertEquals(petJSON, json);
+        assertTrue(json.matches(petJSONregex));
     }
     
     @Test

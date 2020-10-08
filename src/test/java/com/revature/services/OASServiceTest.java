@@ -1,6 +1,6 @@
 package com.revature.services;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import com.revature.docutest.TestUtil;
 import com.revature.models.Request;
 
 @SpringBootTest(classes = DocutestApplication.class)
-@ContextConfiguration(classes = OASService.class)
+@ContextConfiguration(classes = {OASService.class})
 class OASServiceTest {
     
     private List<Request> reqList;

@@ -6,15 +6,21 @@ import io.swagger.models.Model;
 import io.swagger.models.properties.ArrayProperty;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.RefProperty;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 @Service
+@Scope("prototype")
 public class JSONStringCreator {
+    
+    private int autoId = 1;
 
     /**
      * For OAS 2.0, recursively creates a JSON string representation of an object
      * found in the definitions section of a Swagger object. Default values are:
-     * Numeric types: 0 String: "" Boolean: false Array: []
+     * Numeric types: 0 String: "" Boolean: false Array: []. For id fields, auto
+     * generates an incrementing integer starting at 1. Id fields must be named 
+     * "id", case insensitive.
      * 
      * @param definitionKey String key of the definitions object corresponding to
      *                      the name of the object
@@ -48,47 +54,53 @@ public class JSONStringCreator {
     // -------------------------- HELPER METHODS -----------------------------
     private String appendString(String dataType, String field, Map<String, Model> definitions, Property p) {
         String returnString = "";
-        switch (dataType) {
-        case "boolean":
-            returnString += "\"" + field + "\" : \" " + false + "\",";
-            break;
 
-        case "string":
-            returnString += "\"" + field + "\" : \"\",";
-            break;
+        if (field.equalsIgnoreCase("id")) {
+            returnString += "\"" + field + "\" : \"" + autoId + "\",";
+            autoId++;
+        } else {
 
-        case "number":
-            returnString += "\"" + field + "\" : \"" + 0 + "\",";
-            break;
+            switch (dataType) {
+            case "boolean":
+                returnString += "\"" + field + "\" : \" " + false + "\",";
+                break;
 
-        case "integer":
-            returnString += "\"" + field + "\" : \"" + 0 + "\",";
-            break;
+            case "string":
+                returnString += "\"" + field + "\" : \"\",";
+                break;
 
-        case "array":
-            // check type of array
-            String arrayType = ((ArrayProperty) p).getItems().getType();
+            case "number":
+                returnString += "\"" + field + "\" : \"" + 0 + "\",";
+                break;
 
-            // array of objects
-            // add single object
-            if (arrayType.equals("ref")) {
-                RefProperty itemProperty = (RefProperty) ((ArrayProperty) p).getItems();
-                String name = itemProperty.getSimpleRef();
-                returnString += "\"" + field + "\" : [" + createDefaultJSONString(name, definitions) + "],";
-            } else {
-                // array of primitives -> return empty
-                returnString += "\"" + field + "\" : [" + appendPrimitiveArray(dataType) + "],";
+            case "integer":
+                returnString += "\"" + field + "\" : \"" + 0 + "\",";
+                break;
+
+            case "array":
+                // check type of array
+                String arrayType = ((ArrayProperty) p).getItems().getType();
+
+                // array of objects
+                // add single object
+                if (arrayType.equals("ref")) {
+                    RefProperty itemProperty = (RefProperty) ((ArrayProperty) p).getItems();
+                    String name = itemProperty.getSimpleRef();
+                    returnString += "\"" + field + "\" : [" + createDefaultJSONString(name, definitions) + "],";
+                } else {
+                    returnString += "\"" + field + "\" : [" + appendPrimitiveArray(arrayType) + "],";
+                }
+                break;
+
+            case "ref":
+                // object referenced
+                String name = ((RefProperty) p).getSimpleRef();
+                returnString += "\"" + field + "\" : " + createDefaultJSONString(name, definitions) + ",";
+                break;
+
+            default:
+                // TODO log
             }
-            break;
-
-        case "ref":
-            // object referenced
-            String name = ((RefProperty) p).getSimpleRef();
-            returnString += "\"" + field + "\" : " + createDefaultJSONString(name, definitions) + ",";
-            break;
-
-        default:
-            // TODO log
         }
         return returnString;
     }
@@ -116,4 +128,5 @@ public class JSONStringCreator {
         }
         return returnString;
     }
+
 }
