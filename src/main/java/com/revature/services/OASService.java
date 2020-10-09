@@ -13,6 +13,7 @@ import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 import io.swagger.models.parameters.BodyParameter;
+import io.swagger.models.parameters.HeaderParameter;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import io.swagger.models.properties.Property;
@@ -111,10 +112,31 @@ public class OASService {
                 }
                 
             } else if (param instanceof PathParameter) {
-                // TODO set path params
+                setPathParam(req, (PathParameter) param);
+            } else if (param instanceof HeaderParameter) {
+                String defValue;
+                try {
+                    defValue = ((HeaderParameter) param).getDefaultValue().toString();
+                } catch (NullPointerException e) {
+                    defValue = "";
+                }
+                req.getHeaderParams().add(new Header(param.getName(), defValue));
             }
-            // can add other types of params as needed
+            
         }
+    }
+    
+    private void setPathParam(Request req, PathParameter param) {
+        Endpoint endpoint = req.getEndpoint();
+        String path = endpoint.getPath();
+        
+        String pathValue = JSONStringCreator.primitiveDefault(param.getType());
+        
+        path = path.replace("{" + param.getName() + "}", pathValue);
+        endpoint.setPath(path);
+        
+        req.getPathParams().put(param.getName(), pathValue);
+        
     }
 
     /**

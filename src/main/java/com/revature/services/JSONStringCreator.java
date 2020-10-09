@@ -36,8 +36,9 @@ public class JSONStringCreator {
                 Map<String, Property> fields = obj.getProperties();
                 String returnString = "{";
 
-                for (String field : fields.keySet()) {
-                    Property p = fields.get(field);
+                for (Map.Entry<String, Property> fieldEntry : fields.entrySet()) {
+                    String field = fieldEntry.getKey();
+                    Property p = fieldEntry.getValue();
                     String dataType = p.getType();
 
                     returnString += appendString(dataType, field, definitions, p);
@@ -88,7 +89,7 @@ public class JSONStringCreator {
                     String name = itemProperty.getSimpleRef();
                     returnString += "\"" + field + "\" : [" + createDefaultJSONString(name, definitions) + "],";
                 } else {
-                    returnString += "\"" + field + "\" : [" + appendPrimitiveArray(arrayType) + "],";
+                    returnString += "\"" + field + "\" : [" + primitiveDefault(arrayType) + "],";
                 }
                 break;
 
@@ -105,7 +106,7 @@ public class JSONStringCreator {
         return returnString;
     }
 
-    private String appendPrimitiveArray(String dataType) {
+    public static String primitiveDefault(String dataType) {
         String returnString = "";
         switch (dataType) {
         case "boolean":
@@ -121,7 +122,7 @@ public class JSONStringCreator {
             break;
 
         case "integer":
-            returnString += "0";
+            returnString += "1";
             break;
         default:
             break;

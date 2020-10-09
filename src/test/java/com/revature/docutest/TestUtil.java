@@ -20,6 +20,7 @@ public class TestUtil {
     public static Swagger malformed;
     public static Swagger get;
     public static Swagger post;
+    public static Swagger pathParam;
     
     public static Swagger multi;
     public static Swagger petstore;
@@ -60,7 +61,7 @@ public class TestUtil {
     public static final String POST_OBJ_JSON = "{" +
             "\"id\" : \"1\"," +
             "\"field1\" : \"\"," +
-            "\"field2\" : [0]," +
+            "\"field2\" : [1]," +
             "}";
 
     static {
@@ -77,6 +78,7 @@ public class TestUtil {
         petstore = new SwaggerParser().read("src/test/resources/petstore.json");
         yaml = new SwaggerParser().read("src/test/resources/petstore.yaml");
         post = new SwaggerParser().read("src/test/resources/post.json");
+        pathParam = new SwaggerParser().read("src/test/resources/path_param.json");
         
         initRequests();
     }

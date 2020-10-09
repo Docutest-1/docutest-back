@@ -14,7 +14,7 @@ public class Request {
     
     private String body = "";
     private List<Header> headerParams = new ArrayList<>();
-    private Map<String, String> bodyParams = new HashMap<>();
+    private Map<String, String> bodyParams = new HashMap<>(); // currently unused, mostly for future development
     private Map<String, String> pathParams = new HashMap<>();
     private Endpoint endpoint;
     private HttpMethod verb;
