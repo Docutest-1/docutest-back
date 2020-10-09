@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
+import com.revature.aspects.AspectLogger;
 import com.revature.docutest.DocutestApplication;
 import com.revature.docutest.TestUtil;
 import com.revature.models.SwaggerDocutest;
@@ -42,7 +43,7 @@ import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 
 @SpringBootTest(classes = DocutestApplication.class)
-@ContextConfiguration(classes = JMeterService.class)
+@ContextConfiguration(classes = {JMeterService.class, AspectLogger.class})
 class JMeterServiceTest {
 
     @Autowired

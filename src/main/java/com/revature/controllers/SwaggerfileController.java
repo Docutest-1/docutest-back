@@ -19,6 +19,8 @@ import com.revature.templates.LoadTestConfig;
 import com.revature.templates.SwaggerSummaryDTO;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -32,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 public class SwaggerfileController {
+    private static final Logger log = LogManager.getLogger(SwaggerfileController.class);
 
     @Autowired
     private JMeterService jms;
@@ -52,9 +55,21 @@ public class SwaggerfileController {
         LoadTestConfig ltc = mapper.readValue(ltcString, LoadTestConfig.class);
         SwaggerUploadResponse swagResponse = swaggerSummaryService.uploadSwaggerfile(swag, ltc);
         
+        String sanitizedFilename = file.getOriginalFilename();
+        // log uploads
+        if (sanitizedFilename != null) {
+            sanitizedFilename = sanitizedFilename.replaceAll("[\n|\r|\t]", "_");
+        } else {
+            sanitizedFilename = "no_filename_found";
+        }
+        
+        log.info("REQUEST FOR LOAD TEST RECEIVED FOR FILE: {} WITH SWAGGERSUMMARY ID: {}", 
+                sanitizedFilename, swagResponse.getSwaggerSummaryId());
+        
         List<Request> requests = oasService.getRequests(swag);
         Docutest docutest = new SwaggerDocutest(requests);
         
+        log.info("RUNNING TESTS FOR SWAGGERSUMMARY ID: {}", swagResponse.getSwaggerSummaryId());
         Executors.newSingleThreadExecutor().execute(() -> 
             jms.loadTesting(docutest, ltc, swagResponse.getSwaggerSummaryId())
         );

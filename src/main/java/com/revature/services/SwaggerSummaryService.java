@@ -13,6 +13,8 @@ import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class SwaggerSummaryService {
+    private static final Logger log = LogManager.getLogger(SwaggerSummaryService.class);
 
     @Autowired
     private SwaggerSummaryRepository repository;
@@ -30,8 +33,9 @@ public class SwaggerSummaryService {
 
     public SwaggerSummary newSummary() {
         SwaggerSummary s = new SwaggerSummary();
-        return repository.save(s);
-
+        s = repository.save(s);
+        log.info("SAVED NEW SWAGGERSUMMARY WITH ID: {}", s.getId());
+        return s;
     }
 
     public boolean update(SwaggerSummary s) {

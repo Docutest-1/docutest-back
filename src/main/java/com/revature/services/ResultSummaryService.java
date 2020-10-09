@@ -2,6 +2,8 @@ package com.revature.services;
 
 import com.revature.models.ResultSummary;
 import com.revature.repositories.ResultSummaryRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class ResultSummaryService {
+    private static final Logger log = LogManager.getLogger(ResultSummaryService.class);
 
     @Autowired
     private ResultSummaryRepository repository;
@@ -18,6 +21,7 @@ public class ResultSummaryService {
     }
 
     public ResultSummary insert(ResultSummary rs) {
+        log.info("insert() CALLED FOR ResultSummary ID: {}", rs.getId());
         return repository.save(rs);
     }
 

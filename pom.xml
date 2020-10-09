@@ -48,8 +48,8 @@
             <artifactId>swagger-parser</artifactId>
             <version>1.0.51</version>
         </dependency>
-    
-       <dependency>
+
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
@@ -67,7 +67,7 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
-    
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -76,6 +76,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
 
         <dependency>
@@ -176,7 +187,7 @@
                 </dependencies>
             </plugin>
             <!-- End of Plugin Needed for Checkstyle to run -->
-            
+
             <!-- Plugin Needed for Jacoco Code Coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>

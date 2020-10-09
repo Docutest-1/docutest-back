@@ -23,11 +23,14 @@ import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.SetupThreadGroup;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class JMeterService {
+    private static Logger log = LogManager.getLogger(JMeterService.class);
 
     // Object representing the config for the JMeter test
     // At the very least, requires a TestPlan, HTTPSamplerProxy, and ThreadGroup
@@ -123,13 +126,12 @@ public class JMeterService {
             try {
                 jm.run();
                 hashTree.clear();
-
                 ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger, null);
                 // TODO file upload to S3 here
                 resultSummaries.add(resultSummary);
             } catch (Exception e) {
-                // TODO log
-                e.printStackTrace();
+                log.error("EXCEPTION FOR ENDPOINT {} WITH METHOD {}", element.getPath(), element.getMethod());
+                log.trace("STACK TRACE: ", e);
             }
         }
         

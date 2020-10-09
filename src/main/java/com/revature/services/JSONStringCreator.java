@@ -6,12 +6,15 @@ import io.swagger.models.Model;
 import io.swagger.models.properties.ArrayProperty;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.RefProperty;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 @Service
 @Scope("prototype")
 public class JSONStringCreator {
+    private static final Logger log = LogManager.getLogger(JSONStringCreator.class);
     
     private int autoId = 1;
 
@@ -29,6 +32,7 @@ public class JSONStringCreator {
      *         "{}" if null.
      */
     public String createDefaultJSONString(String definitionKey, Map<String, Model> definitions) {
+        
         if (definitionKey != null && definitions != null) {
             Model obj = definitions.get(definitionKey);
 
@@ -100,7 +104,7 @@ public class JSONStringCreator {
                 break;
 
             default:
-                // TODO log
+                log.trace("No valid data type found for appendString. dataType = {}", dataType);
             }
         }
         return returnString;
