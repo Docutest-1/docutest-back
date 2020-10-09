@@ -41,7 +41,6 @@ public class SwaggerSummaryService {
     public boolean update(SwaggerSummary s) {
         SwaggerSummary saved = repository.save(s);
         return saved.equals(s);
-
     }
     
     public boolean delete(SwaggerSummary s) {

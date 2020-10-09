@@ -32,6 +32,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.revature.aspects.AspectLogger;
 import com.revature.docutest.DocutestApplication;
@@ -45,6 +46,7 @@ import io.swagger.parser.SwaggerParser;
 
 @SpringBootTest(classes = DocutestApplication.class)
 @ContextConfiguration(classes = {JMeterService.class, AspectLogger.class})
+@Transactional
 class JMeterServiceTest {
 
     @Autowired
@@ -143,7 +145,7 @@ class JMeterServiceTest {
         loadConfig.setDuration(3);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(testSpecs, loadConfig, 2);
+        jm.loadTesting(testSpecs, loadConfig, 1);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
             long diff = getDiff(reader);

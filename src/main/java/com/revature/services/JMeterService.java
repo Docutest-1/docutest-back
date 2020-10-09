@@ -1,13 +1,16 @@
 package com.revature.services;
 
 import java.util.ArrayList;
+import java.io.ByteArrayOutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.opencsv.CSVWriter;
 import com.revature.models.Docutest;
 import com.revature.models.Request;
 import com.revature.models.ResultSummary;
+import com.revature.models.ResultSummaryCsv;
 import com.revature.models.SwaggerSummary;
 import com.revature.ordering.RequestComparator;
 import com.revature.responsecollector.JMeterResponseCollector;
@@ -41,13 +44,16 @@ public class JMeterService {
 
     // replace user with username later
     public static final String BASE_FILE_PATH = "./datafiles/user_";
-    
+
     public static final String PROPERTIES_PATH = "src/main/resources/jmeter.properties";
 
     private LoadTestConfig testConfig = new LoadTestConfig();
-    
+
     @Autowired
     private SwaggerSummaryService sss;
+
+    @Autowired
+    private ResultSummaryCsvService rscs;
 
     /**
      * Runs the JMeter test using a Docutest object, test configuration, and JMeter
@@ -60,8 +66,8 @@ public class JMeterService {
      * @param propertiesPath File path to the properties JMeter Properties file
      */
     public void loadTesting(Docutest input, LoadTestConfig testConfig, int swaggerSummaryId) {
-        Set<ResultSummary> resultSummaries = new HashSet<>();
-        
+//        Set<ResultSummary> resultSummaries = new HashSet<>();
+
         this.testConfig = testConfig;
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
@@ -94,14 +100,14 @@ public class JMeterService {
             manager.setName(JMeterUtils.getResString("header_manager_title"));
             manager.setProperty(TestElement.TEST_CLASS, HeaderManager.class.getName());
             manager.setProperty(TestElement.GUI_CLASS, HeaderPanel.class.getName());
-            
+
             // add headers
             element.setHeaderManager(manager);
-            
+
             hashTree.add(testPlan);
             HashTree samplerTree = new HashTree();
             samplerTree.add(element, manager);
-            
+
             HashTree threadGroupTree = new HashTree();
             threadGroupTree = hashTree.add(testPlan, threadGroup);
             threadGroupTree.add(samplerTree);
@@ -122,8 +128,13 @@ public class JMeterService {
             String logFile = BASE_FILE_PATH + reqNumber + ".csv";
             reqNumber++;
 
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            CSVWriter writer = rscs.createWriter(stream);
+
+            ResultSummaryCsv resultSummaryCsv = rscs.createCSV(writer);
+
             JMeterResponseCollector logger;
-            logger = new JMeterResponseCollector(summer);
+            logger = new JMeterResponseCollector(summer, writer);
             logger.setFilename(logFile);
 
             hashTree.add(hashTree.getArray()[0], logger);
@@ -135,19 +146,24 @@ public class JMeterService {
                         element.getArguments());
                 jm.run();
                 hashTree.clear();
-                ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger, null);
-                // TODO file upload to S3 here
-                resultSummaries.add(resultSummary);
+
+                // Save CSV to database in ResultSummaryCsv
+                writer.close();
+                resultSummaryCsv.setByteCsv(stream.toByteArray());
+                rscs.update(resultSummaryCsv);
+
+                String dataReference = "/Docutest/csv/" + resultSummaryCsv.getId();
+                ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger,
+                        dataReference);
+                SwaggerSummary swaggerSummary = sss.getById(swaggerSummaryId);
+                swaggerSummary.getResultsummaries().add(resultSummary);
+                sss.update(swaggerSummary);
             } catch (Exception e) {
                 log.error("EXCEPTION FOR ENDPOINT {} WITH METHOD {}", element.getPath(), element.getMethod());
                 log.trace("STACK TRACE: ", e);
             }
         }
-        
-        SwaggerSummary swaggerSummary = sss.getById(swaggerSummaryId);
-        swaggerSummary.setResultsummaries(resultSummaries);
-        sss.update(swaggerSummary);
-        
+
     }
 
     /**
@@ -172,7 +188,7 @@ public class JMeterService {
                 element.setPath(path);
                 element.setMethod(req.getVerb().toString());
                 element.setFollowRedirects(true);
-                
+
                 if (requiresBody(req.getVerb())) {
                     element.setPostBodyRaw(true);
                     element.addNonEncodedArgument("", req.getBody(), "");
@@ -263,5 +279,4 @@ public class JMeterService {
         }
     }
 
-    
 }

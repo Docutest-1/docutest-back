@@ -9,11 +9,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.models.Docutest;
 import com.revature.models.Request;
+import com.revature.models.ResultSummaryCsv;
 import com.revature.models.SwaggerDocutest;
 import com.revature.models.SwaggerSummary;
 import com.revature.models.SwaggerUploadResponse;
 import com.revature.services.JMeterService;
 import com.revature.services.OASService;
+import com.revature.services.ResultSummaryCsvService;
 import com.revature.services.SwaggerSummaryService;
 import com.revature.templates.LoadTestConfig;
 import com.revature.templates.SwaggerSummaryDTO;
@@ -22,6 +24,7 @@ import io.swagger.parser.SwaggerParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,6 +47,8 @@ public class SwaggerfileController {
     private OASService oasService;
     @Autowired
     private ObjectMapper mapper;
+    @Autowired
+    private ResultSummaryCsvService resultSummaryCsvService;
 
     @PostMapping("/upload")
     public ResponseEntity<SwaggerUploadResponse> uploadSwaggerFile(@RequestParam("file") MultipartFile file, @RequestParam("LoadTestConfig") String ltcString) throws IOException {
@@ -94,6 +99,16 @@ public class SwaggerfileController {
         List<SwaggerSummaryDTO> swaggerSummaryDtos = swaggerSummaryService.convertSwaggerSummary(swaggerSummaries);
         
         return ResponseEntity.ok(swaggerSummaryDtos);
+    }
+    
+    @GetMapping("/csv/{id}")
+    public ResponseEntity<byte[]> getResultSummaryCsv(@PathVariable("id") int id) {
+        ResultSummaryCsv csv = resultSummaryCsvService.getById(id);
+        byte[] byteCsv = csv.getByteCsv();
+        
+        MediaType type = MediaType.parseMediaType("text/csv");
+        
+        return ResponseEntity.ok().contentType(type).body(byteCsv);
     }
     
 }

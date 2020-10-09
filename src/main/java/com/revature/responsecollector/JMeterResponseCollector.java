@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.opencsv.CSVWriter;
 import org.apache.jmeter.reporters.ResultCollector;
 import org.apache.jmeter.reporters.Summariser;
 import org.apache.jmeter.samplers.SampleEvent;
 import org.apache.jmeter.samplers.SampleResult;
+
 
 public class JMeterResponseCollector extends ResultCollector { 
     
@@ -21,8 +23,11 @@ public class JMeterResponseCollector extends ResultCollector {
     // count of number of nXX status codes
     private int[] statusCodeCount = new int[5];
     
-    public JMeterResponseCollector(Summariser summer) {
+    private CSVWriter writer;
+    
+    public JMeterResponseCollector(Summariser summer, CSVWriter writer) {
         super(summer);
+        this.writer = writer;
     }
 
     @Override
@@ -43,6 +48,8 @@ public class JMeterResponseCollector extends ResultCollector {
         int respType = Character.getNumericValue(temp);
         // -1 since indices start at 0
         statusCodeCount[respType - 1]++;
+        String[] entries = {String.valueOf(r.getStartTime()), String.valueOf(responseTime), r.getResponseCode()};
+        writer.writeNext(entries);
     }
     
     public double getsuccessFailPercentage() {

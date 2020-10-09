@@ -1,6 +1,7 @@
 package com.revature.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.opencsv.CSVWriter;
 import com.revature.responsecollector.JMeterResponseCollector;
 
 class JMeterResponseCollectorTest {
@@ -25,6 +27,8 @@ class JMeterResponseCollectorTest {
     
     private static List<SampleEvent> sampleEvents = new ArrayList<>();
     
+    private CSVWriter writer;
+        
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
         SampleEvent event1;
@@ -73,7 +77,9 @@ class JMeterResponseCollectorTest {
         JMeterUtils.loadJMeterProperties(JMeterPropPath);
         Summariser summer = null;
         
-        jmrc = new JMeterResponseCollector(summer);
+        writer = mock(CSVWriter.class);
+        
+        jmrc = new JMeterResponseCollector(summer, writer);
     }
 
     @AfterEach

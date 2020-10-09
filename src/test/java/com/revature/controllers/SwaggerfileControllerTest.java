@@ -4,6 +4,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,10 +31,12 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.revature.docutest.DocutestApplication;
+import com.revature.models.ResultSummaryCsv;
 import com.revature.models.SwaggerSummary;
 import com.revature.models.SwaggerUploadResponse;
 import com.revature.services.JMeterService;
 import com.revature.services.OASService;
+import com.revature.services.ResultSummaryCsvService;
 import com.revature.services.SwaggerSummaryService;
 import com.revature.templates.LoadTestConfig;
 import com.revature.templates.SwaggerSummaryDTO;
@@ -51,6 +54,9 @@ class SwaggerfileControllerTest {
     
     @Mock
     private SwaggerSummaryService swaggerSummaryService;
+    
+    @Mock
+    private ResultSummaryCsvService resultSummaryCsvService;
     
     @Mock
     private OASService oasService;
@@ -170,6 +176,22 @@ class SwaggerfileControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/swaggersummary"))
         .andExpect(status().isOk())
         .andExpect(content().json(jsonContent));
+    }
+    
+    @Test
+    void getResultSummaryCsv() throws Exception {
+        Path path = Paths.get("src/test/resources/resultsummary_unittest.csv");
+        byte[] content = Files.readAllBytes(path);
+        
+        ResultSummaryCsv resultSummaryCsv = new ResultSummaryCsv();
+        resultSummaryCsv.setByteCsv(content);
+        resultSummaryCsv.setId(1);
+        
+        when(resultSummaryCsvService.getById(Matchers.eq(1))).thenReturn(resultSummaryCsv);
+        
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/csv/{id}", "1"))
+        .andExpect(status().isOk())
+        .andExpect(content().bytes(content));
     }
     
 }
