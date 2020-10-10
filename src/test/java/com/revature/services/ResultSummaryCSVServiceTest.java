@@ -23,7 +23,7 @@ import com.revature.repositories.ResultSummaryCsvRepository;
 
 @SpringBootTest(classes = DocutestApplication.class)
 @ContextConfiguration(classes = ResultSummaryCsvService.class)
-public class ResultSummaryCSVServiceTest {
+class ResultSummaryCSVServiceTest {
 
     private ResultSummaryCsvService testInstance;
 

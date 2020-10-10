@@ -2,9 +2,14 @@ package com.revature.services;
 
 import java.util.ArrayList;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 
 import com.opencsv.CSVWriter;
 import com.revature.models.Docutest;
@@ -45,7 +50,7 @@ public class JMeterService {
     // replace user with username later
     public static final String BASE_FILE_PATH = "./datafiles/user_";
 
-    public static final String PROPERTIES_PATH = "src/main/resources/jmeter.properties";
+    public static final String PROPERTIES_PATH = "/jmeter.properties";
 
     private LoadTestConfig testConfig = new LoadTestConfig();
 
@@ -55,6 +60,23 @@ public class JMeterService {
     @Autowired
     private ResultSummaryCsvService rscs;
 
+    @PostConstruct
+    private void loadProperties() {
+        InputStream inputStream = getClass().getResourceAsStream(PROPERTIES_PATH);
+        Properties p = new Properties();
+        
+        try {
+            Field field = JMeterUtils.class.getDeclaredField("appProperties");
+            field.setAccessible(true);
+            p.load(inputStream);
+            field.set(this, p);
+        } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException | IOException ex) {
+            ex.printStackTrace();
+        }
+        
+        JMeterUtils.initLocale();
+    }
+    
     /**
      * Runs the JMeter test using a Docutest object, test configuration, and JMeter
      * properties path. If both duration and number of loops are set, duration takes

@@ -25,9 +25,7 @@ public class ResultSummaryCsvService {
     public CSVWriter createWriter(ByteArrayOutputStream stream) {
         OutputStreamWriter streamWriter = new OutputStreamWriter(stream);
         
-        CSVWriter writer = new CSVWriter(streamWriter);
-        
-        return writer;
+        return new CSVWriter(streamWriter);
     }
     
     public ResultSummaryCsv getById(int id) {
