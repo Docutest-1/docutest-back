@@ -22,6 +22,9 @@ import org.apache.jmeter.protocol.http.control.Header;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * OpenAPI Specification Service for parsing different specifications into Docutest objects. Currently only supports Swagger objects.
+ */
 @Service
 public class OASService {
 
@@ -80,7 +83,7 @@ public class OASService {
 
                         req.setEndpoint(endpoint);
                         req.setVerb(operationEntry.getKey());
-                        
+
                         Operation operation = operationEntry.getValue();
 
                         // fill out param info
@@ -95,6 +98,15 @@ public class OASService {
     }
 
     // ------------------------------- HELPER METHODS ------------------------------
+
+    /**
+     * For OAS2.0/Swagger v1. Sets parameters for a Request using the Swagger
+     * object's operation and definition fields.
+     * 
+     * @param req         Request to add parameters to
+     * @param operation   Operations object corresponding to the Request
+     * @param definitions Definition field from Swagger object
+     */
     public void setParams(Request req, Operation operation, Map<String, Model> definitions) {
         List<Parameter> params = operation.getParameters();
         for (Parameter param : params) {
@@ -103,14 +115,14 @@ public class OASService {
             if (param instanceof BodyParameter) {
                 String body = createBody((BodyParameter) param, definitions);
                 req.setBody(body);
-                
+
                 if (operation.getConsumes() == null) {
                     // default to json
                     setContentType(req, "application/json");
                 } else {
                     setContentType(req, operation.getConsumes().get(0));
                 }
-                
+
             } else if (param instanceof PathParameter) {
                 setPathParam(req, (PathParameter) param);
             } else if (param instanceof HeaderParameter) {
@@ -122,25 +134,30 @@ public class OASService {
                 }
                 req.getHeaderParams().add(new Header(param.getName(), defValue));
             }
-            
+
         }
     }
     
+    /**
+     * Sets path parameters. Uses {@link JSONStringCreator}'s primitiveDefault() method.
+     * @param req Request to set path parameters for
+     * @param param PathParameter object
+     */
     private void setPathParam(Request req, PathParameter param) {
         Endpoint endpoint = req.getEndpoint();
         String path = endpoint.getPath();
-        
+
         String pathValue = JSONStringCreator.primitiveDefault(param.getType());
-        
+
         path = path.replace("{" + param.getName() + "}", pathValue);
         endpoint.setPath(path);
-        
+
         req.getPathParams().put(param.getName(), pathValue);
-        
+
     }
 
     /**
-     * Helper method for adding JSON objects for parameters.
+     * Helper method for adding JSON objects for parameters. Uses
      * {@link JSONStringCreator}'s createDefaultJSONString.
      * 
      * @param param       BodyParameter object for the given request.
@@ -167,7 +184,7 @@ public class OASService {
 
         return jsonBody;
     }
-    
+
     private void setContentType(Request req, String type) {
         req.getHeaderParams().add(new Header("Content-Type", type));
     }

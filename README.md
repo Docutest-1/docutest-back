@@ -218,7 +218,7 @@ All endpoints are relative to the [base URL](#using-the-api). For examples of re
 **Status Codes:**
 - 200: OK
 
-**Response**: Array of all SwaggerSummary objects. Temporary placeholder until User account/login features have been implemented
+**Response**: Array of all SwaggerSummary objects. Temporary placeholder until User account/login features have been implemented. If no SwaggerSummary objects are found, returns an empty array.
 
 ## /swaggersummary/{id}
 ```
@@ -230,9 +230,9 @@ All endpoints are relative to the [base URL](#using-the-api). For examples of re
 
 **Status Codes:**
 - 200: OK
-- 204: No Content, i.e. SwaggerSummary with specified id does not exist
+- 404: NotFound, i.e. SwaggerSummary with specified id does not exist
 
-**Response**: [SwaggerSummary](#SwaggerSummary-Object) object which contains fields for the test configuration settings plus an array containing resultsummaries objects for each request/endpoint combination. The resultsummaries object contains aggregate summary results for the test, along with a link to a CSV file which contains information for each individual thread. All times are in milliseconds (ms). **If the specified SwaggerSummary object with {id} is not found, simply returns a blank response.**
+**Response**: [SwaggerSummary](#SwaggerSummary-Object) object which contains fields for the test configuration settings plus an array containing resultsummaries objects for each request/endpoint combination. The resultsummaries object contains aggregate summary results for the test, along with a link to a CSV file which contains information for each individual thread. All times are in milliseconds (ms). Returns a 404 with an empty body if the specified SwaggerSummary object with {id} is not found. **Since the SwaggerSummary object is not created or persisted until the load test has completed, a 404 will be returned even for valid IDs if we attempt to access the object before the load test completes.**
 
 **Raw data for each thread (i.e. dataReference) is currently being stored directly as a byte[], but this implementation is temporary. See [ResultSummaryCsv section in Response Structure](#Response-Structure)**
 

@@ -1,4 +1,4 @@
-package com.revature.responsecollector;
+package com.revature.services;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,6 +9,9 @@ import org.apache.jmeter.reporters.Summariser;
 import org.apache.jmeter.samplers.SampleEvent;
 import org.apache.jmeter.samplers.SampleResult;
 
+/**
+ * Service responsible for collecting results from JMeter load tests
+ */
 public class JMeterResponseCollector extends ResultCollector { 
     
     private static final long serialVersionUID = -4468726154521336732L;

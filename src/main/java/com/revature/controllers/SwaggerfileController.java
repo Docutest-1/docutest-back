@@ -31,6 +31,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Controller for requests relating to spec file upload and results
+ */
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 public class SwaggerfileController {

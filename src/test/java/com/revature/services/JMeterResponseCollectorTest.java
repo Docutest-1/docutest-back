@@ -16,8 +16,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.revature.responsecollector.JMeterResponseCollector;
-
 class JMeterResponseCollectorTest {
     private JMeterResponseCollector jmrc;
     private StandardJMeterEngine engine;

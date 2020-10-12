@@ -6,7 +6,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-import com.revature.responsecollector.JMeterResponseCollector;
+import com.revature.services.JMeterResponseCollector;
 import lombok.Data;
 
 @Data

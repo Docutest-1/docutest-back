@@ -8,7 +8,6 @@ import com.revature.models.Docutest;
 import com.revature.models.Request;
 import com.revature.models.ResultSummary;
 import com.revature.models.SwaggerSummary;
-import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
 import io.swagger.models.HttpMethod;
 import org.apache.jmeter.control.LoopController;
@@ -28,6 +27,9 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service responsible for running the JMeter load tests
+ */
 @Service
 public class JMeterService {
     private static Logger log = LogManager.getLogger(JMeterService.class);

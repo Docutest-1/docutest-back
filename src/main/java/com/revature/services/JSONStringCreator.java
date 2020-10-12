@@ -11,6 +11,11 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+
+/**
+ * Service that auto generates JSON string representations of objects based on default values for primitives.
+ * For fields named "id" (case insensitive), auto increments integers starting at 1.
+ */
 @Service
 @Scope("prototype")
 public class JSONStringCreator {
