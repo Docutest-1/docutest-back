@@ -35,6 +35,7 @@ as well as can be retrieved at any point in the future
             - [JSONStringCreator](#JSONStringCreator)
         - [ResultSummaryService](#ResultSummaryService)
         - [SwaggerSummaryService](#SwaggerSummaryService)
+        - [ResultSummaryCsvService](#resultsummarycsvservce)
     - [Repository Layer](#Repository-Layer)
         - ResultSummaryRepository
         - SwaggerSummaryRepository
@@ -174,13 +175,13 @@ The API returns 4 main objects. See [endpoints](#endpoints) for a list of endpoi
 
 Result Summary CSV Format:
 
-Each row represents a single request by a single thread and contains the following: timestamp, response time, status code, and error message. A header row is included. For example:
-|timestamp|elapsed|responseCode|failureMessage|
-|----------|---|---|---|
-|1601578125|232|200||
-|1601578127|100|200||
-|1601578130|122|200||
-|1601578131|79|400|Error Message|
+Each row represents a single request by a single thread and contains the following: timestamp, response time, and status code. A header row is included. For example:
+|startTime (epoch time [ms])|responseTime [ms]|responseCode|
+|----------|---|---|
+|1601578125|232|200|
+|1601578127|100|200|
+|1601578130|122|200|
+|1601578131|79|400|
 ...
 
 \* **THIS IS CURRENTLY IMPLEMENTED AS A SEPARATE ENTITY DUE TO PERMISSIONS ISSUES WITH IAM/S3, BUT IDEALLY WOULD BE HOSTED AS A STATIC .CSV FILE ON AN S3 BUCKET**
@@ -189,10 +190,8 @@ Each row represents a single request by a single thread and contains the followi
 
 All endpoints are relative to the [base URL](#using-the-api). For examples of response objects, refer to [Response Structure](#Response-Structure)
 
-## /upload
-```
-/upload
-```
+## `/upload`
+
 **Verb**: POST
 
 **Format**: Multipart/form-data
@@ -207,10 +206,20 @@ All endpoints are relative to the [base URL](#using-the-api). For examples of re
 
 **Response**: [SwaggerUploadResponse](#SwaggerUploadResponse) object
 
-## /swaggersummary
-```
-/swaggersummary
-```
+## `/csv/{id}`
+
+**VERB**: GET
+
+**Format**: text/csv
+
+**Status Codes**: 
+- 200: OK
+- 204: No Content, no CSV found with corresponding id
+
+**Response**: CSV file with ID corresponding to a specific ResultSummary as a byte array.
+
+## `/swaggersummary`
+
 **Verb**: GET
 
 **Format**: application/json
@@ -220,10 +229,8 @@ All endpoints are relative to the [base URL](#using-the-api). For examples of re
 
 **Response**: Array of all SwaggerSummary objects. Temporary placeholder until User account/login features have been implemented. If no SwaggerSummary objects are found, returns an empty array.
 
-## /swaggersummary/{id}
-```
-/swaggersummary/12
-```
+## `/swaggersummary/{id}`
+
 **Verb**: GET
 
 **Format**: application/json
@@ -347,12 +354,17 @@ In order to have summary statistics for each individual endpoint. the service it
 
 - Service for interfacing with the repository layer.
 
+### ResultSummaryCsvService
+
+- Service for interfacing with the repository layer, and writing CSV files using CSVWriter
+
 ## Repository Layer
 
-Actual DAO/Repositories are implemented through Spring Data JPA. There are currently two interfaces:
+Actual DAO/Repositories are implemented through Spring Data JPA. There are currently 3 interfaces:
 
 - ResultSummaryRepository
 - SwaggerSummaryRepository
+- ResultSummaryCsvRepository
 
 # Third Party Libraries
 
