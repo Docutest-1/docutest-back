@@ -79,7 +79,7 @@ public class JSONStringCreator {
                 break;
 
             case "integer":
-                returnString += "\"" + field + "\" : \"" + 0 + "\",";
+                returnString += "\"" + field + "\" : \"" + 1 + "\",";
                 break;
 
             case "array":
