@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -186,7 +187,7 @@ class JMeterServiceTest {
     @Test
     void testHttpSamplerDistinctRequestCount() {
         testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.get));
-        Set<HTTPSamplerProxy> samplers = jm.createHTTPSamplerProxy(testSpecs);
+        List<HTTPSamplerProxy> samplers = jm.createHTTPSamplerProxy(testSpecs);
         assertEquals(1, samplers.size());
         testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.todos));
         samplers = jm.createHTTPSamplerProxy(testSpecs);
@@ -199,7 +200,7 @@ class JMeterServiceTest {
         // get.json
         Set<String> expected = new HashSet<>();
         expected.add("/");
-        Set<HTTPSamplerProxy> samplers = jm.createHTTPSamplerProxy(testSpecs);
+        List<HTTPSamplerProxy> samplers = jm.createHTTPSamplerProxy(testSpecs);
         for (HTTPSamplerProxy sampler : samplers) {
             assertTrue(expected.contains(sampler.getPath()));
         }
@@ -236,7 +237,7 @@ class JMeterServiceTest {
     @Test
     void testCreateLoopController() {
         testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.todos));
-        Set<HTTPSamplerProxy> samplerSet = jm.createHTTPSamplerProxy(testSpecs);
+        List<HTTPSamplerProxy> samplerSet = jm.createHTTPSamplerProxy(testSpecs);
         for (HTTPSamplerProxy element : samplerSet) {
             LoopController testLC = (LoopController) jm.createLoopController(element, loadConfig.getLoops());
             assertEquals(loadConfig.getLoops(), testLC.getLoops());
@@ -254,7 +255,7 @@ class JMeterServiceTest {
     @Test
     void testObjectCreatorSimplePost() {
         testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.post));
-        Set<HTTPSamplerProxy> samplers = jm.createHTTPSamplerProxy(testSpecs);
+        List<HTTPSamplerProxy> samplers = jm.createHTTPSamplerProxy(testSpecs);
         
         for (HTTPSamplerProxy element : samplers) {
             Arguments args = element.getArguments();
@@ -274,7 +275,7 @@ class JMeterServiceTest {
     @Test
     void testObjectCreatorHTTPSamplerProxy() {
         testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.petstore));
-        Set<HTTPSamplerProxy> samplers = jm.createHTTPSamplerProxy(testSpecs);
+        List<HTTPSamplerProxy> samplers = jm.createHTTPSamplerProxy(testSpecs);
         for (HTTPSamplerProxy element : samplers) {
             Arguments args = element.getArguments();
             Map<String, String> argsMap = args.getArgumentsAsMap();

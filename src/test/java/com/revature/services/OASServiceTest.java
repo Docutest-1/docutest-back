@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import com.revature.docutest.TestUtil;
 import com.revature.models.Request;
+import com.revature.ordering.RequestComparator;
 
 class OASServiceTest {
     
@@ -85,6 +86,16 @@ class OASServiceTest {
     void testNullInput() {
         reqList = oasService.getRequests(null);
         assertEquals(0, reqList.size());
+    }
+    
+    @Test
+    void testRequestOrder() {
+        reqList = oasService.getRequests(TestUtil.todos);
+        reqList.sort(new RequestComparator());
+        for (int i = 0; i < reqList.size(); i++) {
+            assertEquals(reqList.get(i).getVerb(), TestUtil.verbOrder[i]);
+            assertEquals(reqList.get(i).getEndpoint().getPath(), TestUtil.pathOrder[i]);
+        }
     }
 
 }

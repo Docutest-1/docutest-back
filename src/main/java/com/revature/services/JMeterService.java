@@ -1,5 +1,6 @@
 package com.revature.services;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,6 +9,7 @@ import com.revature.models.Docutest;
 import com.revature.models.Request;
 import com.revature.models.ResultSummary;
 import com.revature.models.SwaggerSummary;
+import com.revature.ordering.RequestComparator;
 import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.templates.LoadTestConfig;
 import io.swagger.models.HttpMethod;
@@ -66,8 +68,11 @@ public class JMeterService {
         JMeterUtils.loadJMeterProperties(PROPERTIES_PATH);
         JMeterUtils.initLocale();
 
-        // create set of all unique HTTP requests as defined in swagger
-        Set<HTTPSamplerProxy> httpSampler = this.createHTTPSamplerProxy(input);
+        // create list of all HTTP requests as defined in swagger
+        // then sort so we get the proper order of requests (i.e. post before get before delete)
+        
+        input.getRequests().sort(new RequestComparator());
+        List<HTTPSamplerProxy> httpSampler = this.createHTTPSamplerProxy(input);
 
         int reqNumber = 0;
 
@@ -124,6 +129,10 @@ public class JMeterService {
             hashTree.add(hashTree.getArray()[0], logger);
 
             try {
+                log.info("RUNNING LOAD TEST FOR ENDPOINT: {}:{}{}, VERB: {}, ARGS: {}", 
+                        element.getDomain(), element.getPort(), element.getPath(),
+                        element.getMethod(),
+                        element.getArguments());
                 jm.run();
                 hashTree.clear();
                 ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger, null);
@@ -149,8 +158,8 @@ public class JMeterService {
      * @return Set of HTTPSamplerProxy objects. Returns an empty set if there are no
      *         endpoints. Returns null if there is a problem with the Swagger input.
      */
-    public Set<HTTPSamplerProxy> createHTTPSamplerProxy(Docutest input) {
-        Set<HTTPSamplerProxy> httpSamplers = new HashSet<>();
+    public List<HTTPSamplerProxy> createHTTPSamplerProxy(Docutest input) {
+        List<HTTPSamplerProxy> httpSamplers = new ArrayList<>();
         if (input != null) {
             List<Request> requests = input.getRequests();
             // each verb/operation
@@ -214,6 +223,7 @@ public class JMeterService {
             ret.setDuration(testConfig.getDuration());
             controller.setLoops(-1);
         }
+        
         ret.setNumThreads(threads);
         ret.setRampUp(rampUp);
         ret.setSamplerController(controller); // needs to not be null
