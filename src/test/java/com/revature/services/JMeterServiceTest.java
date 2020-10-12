@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.jmeter.config.Arguments;
@@ -90,7 +91,7 @@ class JMeterServiceTest {
         deleteFolder(directory);
         MockitoAnnotations.initMocks(this);
         
-        when(sss.getById(anyInt())).thenReturn(new SwaggerSummary());
+        when(sss.getById(anyInt())).thenReturn(Optional.of(new SwaggerSummary()));
     }
 
     @AfterEach

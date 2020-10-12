@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,7 @@ class ResultSummaryCSVServiceTest {
         testCsvFail.setId(2);
 
         testInstance = new ResultSummaryCsvService(MockedDao);
-        when(MockedDao.findById(1)).thenReturn(testCsv);
+        when(MockedDao.findById(1)).thenReturn(Optional.of(testCsv));
         when(MockedDao.save(any())).thenReturn(testCsv);
         when(MockedDao.save(testCsv)).thenReturn(testCsv);
         when(MockedDao.save(testCsvFail)).thenReturn(testCsv);
@@ -62,7 +63,7 @@ class ResultSummaryCSVServiceTest {
     @Test
     void testGetById() {
         ResultSummaryCsv expected = testCsv;
-        assertEquals(expected, testInstance.getById(1));
+        assertEquals(expected, testInstance.getById(1).get());
     }
 
     @Test

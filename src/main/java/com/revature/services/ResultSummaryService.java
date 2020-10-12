@@ -1,5 +1,7 @@
 package com.revature.services;
 
+import java.util.Optional;
+
 import com.revature.models.ResultSummary;
 import com.revature.repositories.ResultSummaryRepository;
 import org.apache.logging.log4j.LogManager;
@@ -36,7 +38,7 @@ public class ResultSummaryService {
 
     }
 
-    public ResultSummary getById(int id) {
+    public Optional<ResultSummary> getById(int id) {
         return repository.findById(id);
     }
 

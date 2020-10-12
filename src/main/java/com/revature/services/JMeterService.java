@@ -1,14 +1,13 @@
 package com.revature.services;
 
-import java.util.ArrayList;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import javax.annotation.PostConstruct;
 
 import com.opencsv.CSVWriter;
@@ -37,6 +36,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class JMeterService {
@@ -59,7 +59,7 @@ public class JMeterService {
 
     @Autowired
     private ResultSummaryCsvService rscs;
-
+    
     @PostConstruct
     private void loadProperties() {
         InputStream inputStream = getClass().getResourceAsStream(PROPERTIES_PATH);
@@ -71,7 +71,8 @@ public class JMeterService {
             p.load(inputStream);
             field.set(this, p);
         } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException | IOException ex) {
-            ex.printStackTrace();
+            log.error("EXCEPTION THROWN WHILE ATTEMPTING TO SET JMETER PROPERTIES");
+            log.trace("STACK TRACE: ", ex);
         }
         
         JMeterUtils.initLocale();
@@ -87,14 +88,11 @@ public class JMeterService {
      * @param testConfig     LoadTestConfig object with test settings
      * @param propertiesPath File path to the properties JMeter Properties file
      */
+    @Transactional
     public void loadTesting(Docutest input, LoadTestConfig testConfig, int swaggerSummaryId) {
-//        Set<ResultSummary> resultSummaries = new HashSet<>();
 
         this.testConfig = testConfig;
         StandardJMeterEngine jm = new StandardJMeterEngine();
-
-        JMeterUtils.loadJMeterProperties(PROPERTIES_PATH);
-        JMeterUtils.initLocale();
 
         // create list of all HTTP requests as defined in swagger
         // then sort so we get the proper order of requests (i.e. post before get before delete)
@@ -172,14 +170,16 @@ public class JMeterService {
                 // Save CSV to database in ResultSummaryCsv
                 writer.close();
                 resultSummaryCsv.setByteCsv(stream.toByteArray());
-                rscs.update(resultSummaryCsv);
 
-                String dataReference = "/Docutest/csv/" + resultSummaryCsv.getId();
                 ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger,
-                        dataReference);
-                SwaggerSummary swaggerSummary = sss.getById(swaggerSummaryId);
-                swaggerSummary.getResultsummaries().add(resultSummary);
-                sss.update(swaggerSummary);
+                        resultSummaryCsv);
+                Optional<SwaggerSummary> optSwaggerSummary = sss.getById(swaggerSummaryId);
+                if (optSwaggerSummary.isPresent()) {
+                    SwaggerSummary swaggerSummary = optSwaggerSummary.get();
+                    swaggerSummary.getResultsummaries().add(resultSummary);
+                    sss.update(swaggerSummary);
+                } 
+                
             } catch (Exception e) {
                 log.error("EXCEPTION FOR ENDPOINT {} WITH METHOD {}", element.getPath(), element.getMethod());
                 log.trace("STACK TRACE: ", e);

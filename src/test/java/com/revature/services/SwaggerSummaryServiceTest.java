@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -89,7 +90,7 @@ class SwaggerSummaryServiceTest {
         
         when(MockedDao.save(any(SwaggerSummary.class))).thenReturn(swaggerSummary);
         when(MockedDao.existsById(1)).thenReturn(false);
-        when(MockedDao.findById(1)).thenReturn(swaggerSummary);
+        when(MockedDao.findById(1)).thenReturn(Optional.of(swaggerSummary));
         
         when(MockedDao.save(swaggerSummaryfail)).thenReturn(swaggerSummary);
         when(MockedDao.existsById(2)).thenReturn(true);
@@ -130,7 +131,7 @@ class SwaggerSummaryServiceTest {
     
     @Test
     void testGetById() {
-        assertEquals(testInstance.getById(1), swaggerSummary);
+        assertEquals(testInstance.getById(1).get(), swaggerSummary);
     }
     
     @Test

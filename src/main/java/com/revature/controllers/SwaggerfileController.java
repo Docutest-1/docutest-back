@@ -3,19 +3,21 @@ package com.revature.controllers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.models.Docutest;
 import com.revature.models.Request;
+import com.revature.models.ResultSummary;
 import com.revature.models.ResultSummaryCsv;
 import com.revature.models.SwaggerDocutest;
 import com.revature.models.SwaggerSummary;
 import com.revature.models.SwaggerUploadResponse;
 import com.revature.services.JMeterService;
 import com.revature.services.OASService;
-import com.revature.services.ResultSummaryCsvService;
+import com.revature.services.ResultSummaryService;
 import com.revature.services.SwaggerSummaryService;
 import com.revature.templates.LoadTestConfig;
 import com.revature.templates.SwaggerSummaryDTO;
@@ -48,7 +50,7 @@ public class SwaggerfileController {
     @Autowired
     private ObjectMapper mapper;
     @Autowired
-    private ResultSummaryCsvService resultSummaryCsvService;
+    private ResultSummaryService resultSummaryService;
 
     @PostMapping("/upload")
     public ResponseEntity<SwaggerUploadResponse> uploadSwaggerFile(@RequestParam("file") MultipartFile file, @RequestParam("LoadTestConfig") String ltcString) throws IOException {
@@ -58,7 +60,7 @@ public class SwaggerfileController {
         Swagger swag = new SwaggerParser().read(node);
         
         LoadTestConfig ltc = mapper.readValue(ltcString, LoadTestConfig.class);
-        SwaggerUploadResponse swagResponse = swaggerSummaryService.uploadSwaggerfile(swag, ltc);
+        SwaggerUploadResponse swagResponse;
         
         String sanitizedFilename = file.getOriginalFilename();
         // log uploads
@@ -68,6 +70,14 @@ public class SwaggerfileController {
             sanitizedFilename = "no_filename_found";
         }
         
+        try {
+            swagResponse = swaggerSummaryService.uploadSwaggerfile(swag, ltc);
+        } catch (NullPointerException e) {
+            log.error("NO ENDPOINTS WERE FOUND FOR FILE: {}",
+                    sanitizedFilename);
+            return ResponseEntity.badRequest().build();
+        }
+                
         log.info("REQUEST FOR LOAD TEST RECEIVED FOR FILE: {} WITH SWAGGERSUMMARY ID: {}", 
                 sanitizedFilename, swagResponse.getSwaggerSummaryId());
         
@@ -85,11 +95,11 @@ public class SwaggerfileController {
     @GetMapping("/swaggersummary/{id}")
     public ResponseEntity<SwaggerSummary> getSwaggerSummary(@PathVariable("id") int id) {
 
-        SwaggerSummary s = swaggerSummaryService.getById(id);
-        if (s == null) {
+        Optional<SwaggerSummary> s = swaggerSummaryService.getById(id);
+        if (!s.isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(s);
+        return ResponseEntity.ok(s.get());
     }
     
     @GetMapping("/swaggersummary")
@@ -103,7 +113,16 @@ public class SwaggerfileController {
     
     @GetMapping("/csv/{id}")
     public ResponseEntity<byte[]> getResultSummaryCsv(@PathVariable("id") int id) {
-        ResultSummaryCsv csv = resultSummaryCsvService.getById(id);
+        Optional<ResultSummary> rs = resultSummaryService.getById(id);
+        if (!rs.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        ResultSummaryCsv csv = rs.get().getResultSummaryCsv();
+        if (csv == null) {
+            return ResponseEntity.noContent().build();
+        }
+        
         byte[] byteCsv = csv.getByteCsv();
         
         MediaType type = MediaType.parseMediaType("text/csv");

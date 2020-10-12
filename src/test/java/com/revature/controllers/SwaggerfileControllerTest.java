@@ -1,15 +1,18 @@
 package com.revature.controllers;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,12 +34,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.revature.docutest.DocutestApplication;
+import com.revature.models.ResultSummary;
 import com.revature.models.ResultSummaryCsv;
 import com.revature.models.SwaggerSummary;
 import com.revature.models.SwaggerUploadResponse;
+import com.revature.responsecollector.JMeterResponseCollector;
 import com.revature.services.JMeterService;
 import com.revature.services.OASService;
-import com.revature.services.ResultSummaryCsvService;
+import com.revature.services.ResultSummaryService;
 import com.revature.services.SwaggerSummaryService;
 import com.revature.templates.LoadTestConfig;
 import com.revature.templates.SwaggerSummaryDTO;
@@ -56,7 +61,7 @@ class SwaggerfileControllerTest {
     private SwaggerSummaryService swaggerSummaryService;
     
     @Mock
-    private ResultSummaryCsvService resultSummaryCsvService;
+    private ResultSummaryService resultSummaryService;
     
     @Mock
     private OASService oasService;
@@ -113,6 +118,45 @@ class SwaggerfileControllerTest {
     }
     
     @Test
+    void testUploadSwaggerFile_badRequest() throws Exception {
+        Path path = Paths.get("src/test/resources/get.json");
+        String name = "file";
+        String originalFileName = "get.json";
+        String contentType = "application/json";
+        byte[] content = null;
+
+        content = Files.readAllBytes(path);
+
+        MockMultipartFile result = new MockMultipartFile(name,
+                             originalFileName, contentType, content);
+        
+        SwaggerUploadResponse sur = new SwaggerUploadResponse();
+        sur.setEta(0);
+        sur.setResultRef("Docutest/swaggersummary/1");
+        sur.setSwaggerSummaryId(1);
+        
+        String expectedJson = new ObjectMapper().writeValueAsString(sur);
+        
+        LoadTestConfig ltc = new LoadTestConfig();
+        ltc.setDuration(0);
+        ltc.setFollowRedirects(true);
+        ltc.setLoops(100);
+        ltc.setRampUp(2);
+        ltc.setTestPlanName("test");
+        ltc.setThreads(10);
+        
+        Swagger swagger = new SwaggerParser().read("src/test/resources/get.json");
+        
+        when(swaggerSummaryService.uploadSwaggerfile(swagger, ltc)).thenThrow(NullPointerException.class);
+        
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart("/upload")
+                .file(result)
+                .param("LoadTestConfig", 
+                        "{ \"testPlanName\" : \"test\", \"loops\" : 100, \"duration\" : 0, \"threads\" : 10, \"rampUp\" : 2, \"followRedirects\" : true }"))
+                .andExpect(status().isBadRequest());
+    }
+    
+    @Test
     void getSwaggerSummary() throws Exception {
         
         SwaggerSummary swaggerSummary = new SwaggerSummary();
@@ -126,7 +170,7 @@ class SwaggerfileControllerTest {
         swaggerSummary.setThreads(10);
         
         String jsonContent = new ObjectMapper().writeValueAsString(swaggerSummary);
-        when(swaggerSummaryService.getById(Matchers.eq(1))).thenReturn(swaggerSummary);
+        when(swaggerSummaryService.getById(Matchers.eq(1))).thenReturn(Optional.of(swaggerSummary));
         
         this.mockMvc.perform(MockMvcRequestBuilders.get("/swaggersummary/{id}", "1"))
                 .andExpect(status().isOk())
@@ -146,7 +190,7 @@ class SwaggerfileControllerTest {
         swaggerSummary.setTestPlanName("test");
         swaggerSummary.setThreads(10);
         
-        when(swaggerSummaryService.getById(Matchers.eq(1))).thenReturn(null);
+        when(swaggerSummaryService.getById(Matchers.eq(1))).thenReturn(Optional.<SwaggerSummary>empty());
         
         this.mockMvc.perform(MockMvcRequestBuilders.get("/swaggersummary/{id}", "1"))
                 .andExpect(status().isNotFound());
@@ -187,11 +231,52 @@ class SwaggerfileControllerTest {
         resultSummaryCsv.setByteCsv(content);
         resultSummaryCsv.setId(1);
         
-        when(resultSummaryCsvService.getById(Matchers.eq(1))).thenReturn(resultSummaryCsv);
+        ResultSummary resultSummary = mock(ResultSummary.class);
+        when(resultSummary.getResultSummaryCsv()).thenReturn(resultSummaryCsv);
+        
+        when(resultSummaryService.getById(Matchers.eq(1))).thenReturn(Optional.of(resultSummary));
         
         this.mockMvc.perform(MockMvcRequestBuilders.get("/csv/{id}", "1"))
         .andExpect(status().isOk())
         .andExpect(content().bytes(content));
+    }
+    
+    @Test
+    void getResultSummaryCsv_nullRs() throws Exception {
+        Path path = Paths.get("src/test/resources/resultsummary_unittest.csv");
+        byte[] content = Files.readAllBytes(path);
+        
+        ResultSummaryCsv resultSummaryCsv = new ResultSummaryCsv();
+        resultSummaryCsv.setByteCsv(content);
+        resultSummaryCsv.setId(1);
+        
+        ResultSummary resultSummary = mock(ResultSummary.class);
+        when(resultSummary.getResultSummaryCsv()).thenReturn(null);
+        
+        Optional<ResultSummary> optResultSummary = Optional.<ResultSummary>empty();
+        
+        when(resultSummaryService.getById(Matchers.eq(1))).thenReturn(optResultSummary);
+        
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/csv/{id}", "1"))
+        .andExpect(status().isNotFound());
+    }
+    
+    @Test
+    void getResultSummaryCsv_nullCsv() throws Exception {
+        Path path = Paths.get("src/test/resources/resultsummary_unittest.csv");
+        byte[] content = Files.readAllBytes(path);
+        
+        ResultSummaryCsv resultSummaryCsv = new ResultSummaryCsv();
+        resultSummaryCsv.setByteCsv(content);
+        resultSummaryCsv.setId(1);
+        
+        ResultSummary resultSummary = mock(ResultSummary.class);
+        when(resultSummary.getResultSummaryCsv()).thenReturn(null);
+        
+        when(resultSummaryService.getById(Matchers.eq(1))).thenReturn(Optional.of(resultSummary));
+        
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/csv/{id}", "1"))
+        .andExpect(status().isNoContent());
     }
     
 }

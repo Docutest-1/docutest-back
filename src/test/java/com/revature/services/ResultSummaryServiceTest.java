@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +44,7 @@ class ResultSummaryServiceTest {
         resultSummaryfail.setId(2);
         when(MockedDao.save(resultSummary)).thenReturn(resultSummary);
         when(MockedDao.existsById(1)).thenReturn(false);
-        when(MockedDao.findById(1)).thenReturn(resultSummary);
+        when(MockedDao.findById(1)).thenReturn(Optional.of(resultSummary));
         
         when(MockedDao.save(resultSummaryfail)).thenReturn(resultSummary);
         when(MockedDao.existsById(2)).thenReturn(true);
@@ -82,7 +84,7 @@ class ResultSummaryServiceTest {
     
     @Test
     void testGetById() {
-        assertEquals(resultSummary, testInstance.getById(1));
+        assertEquals(resultSummary, testInstance.getById(1).get());
     }
     
     @Test

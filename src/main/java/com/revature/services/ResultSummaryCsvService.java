@@ -2,6 +2,7 @@ package com.revature.services;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
+import java.util.Optional;
 
 import com.opencsv.CSVWriter;
 import com.revature.models.ResultSummaryCsv;
@@ -28,7 +29,7 @@ public class ResultSummaryCsvService {
         return new CSVWriter(streamWriter);
     }
     
-    public ResultSummaryCsv getById(int id) {
+    public Optional<ResultSummaryCsv> getById(int id) {
         return repository.findById(id);
     }
 

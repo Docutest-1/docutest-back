@@ -3,6 +3,7 @@ package com.revature.services;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.revature.models.SwaggerSummary;
 import com.revature.models.SwaggerUploadResponse;
@@ -48,7 +49,7 @@ public class SwaggerSummaryService {
         return !repository.existsById(s.getId());
     }
 
-    public SwaggerSummary getById(int id) {
+    public Optional<SwaggerSummary> getById(int id) {
         return repository.findById(id);
     }
 

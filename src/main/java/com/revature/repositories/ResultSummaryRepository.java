@@ -6,7 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ResultSummaryRepository extends JpaRepository<ResultSummary, Integer> {
-    
-    ResultSummary findById(int id);
-    
 }

@@ -6,7 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SwaggerSummaryRepository extends JpaRepository<SwaggerSummary, Integer> {
-    
-    SwaggerSummary findById(int id);
-    
 }

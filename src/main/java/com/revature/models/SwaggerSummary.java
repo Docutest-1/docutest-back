@@ -26,7 +26,7 @@ public class SwaggerSummary {
     private int threads;
     private int rampUp;
     private boolean followRedirects;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<ResultSummary> resultsummaries = new HashSet<>();
     
 }
