@@ -15,7 +15,6 @@ import com.opencsv.CSVWriter;
 import com.revature.models.Docutest;
 import com.revature.models.Request;
 import com.revature.models.ResultSummary;
-import com.revature.models.ResultSummaryCsv;
 import com.revature.models.SwaggerSummary;
 import com.revature.ordering.RequestComparator;
 import com.revature.responsecollector.JMeterResponseCollector;
@@ -59,15 +58,12 @@ public class JMeterService {
 
     @Autowired
     private SwaggerSummaryService sss;
-
-    @Autowired
-    private ResultSummaryCsvService rscs;
     
     @Autowired
     private ResultSummaryService rss;
     
     @Autowired
-    private S3Service s3Service;
+    private S3CSVService s3Service;
     
     @PostConstruct
     private void loadProperties() {
@@ -158,9 +154,11 @@ public class JMeterService {
             reqNumber++;
 
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            CSVWriter writer = rscs.createWriter(stream);
-
-            ResultSummaryCsv resultSummaryCsv = rscs.createCSV(writer);
+            CSVWriter writer = s3Service.createWriter(stream);
+            
+            // write headers
+            String[] header = { "startTime (epoch time [ms])", "responseTime [ms]", "responseCode" }; 
+            writer.writeNext(header); 
 
             JMeterResponseCollector logger;
             logger = new JMeterResponseCollector(summer, writer);
@@ -178,11 +176,9 @@ public class JMeterService {
 
                 // Save CSV to database in ResultSummaryCsv
                 writer.close();
-                resultSummaryCsv.setByteCsv(stream.toByteArray());
                 
                 // Insert resultsummary and csv to S3 bucket
-                ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger,
-                        resultSummaryCsv);
+                ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger);
                 resultSummary = rss.insert(resultSummary);
                 InputStream is = new ByteArrayInputStream(stream.toByteArray());
                 String filename = "resultsummary_csv_" + resultSummary.getId() + ".csv";

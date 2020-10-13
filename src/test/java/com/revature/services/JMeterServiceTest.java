@@ -60,7 +60,7 @@ class JMeterServiceTest {
     @Mock
     private SwaggerSummaryService sss;
     @Mock
-    private S3Service s3Service;
+    private S3CSVService s3Service;
     
     @Autowired
     private static OASService adapter;

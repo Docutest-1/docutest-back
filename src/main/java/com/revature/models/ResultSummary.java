@@ -1,15 +1,11 @@
 package com.revature.models;
 
 import java.net.URI;
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToOne;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.revature.responsecollector.JMeterResponseCollector;
 import lombok.Data;
 
@@ -32,15 +28,11 @@ public class ResultSummary {
     private double successFailPercentage;
     private double reqPerSec;
     private String dataReference;
-    
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private ResultSummaryCsv resultSummaryCsv;
-    
+        
     public ResultSummary() {
     }
     
-    public ResultSummary(URI uri, String httpMethod, JMeterResponseCollector logger, ResultSummaryCsv resultSummaryCsv) {
+    public ResultSummary(URI uri, String httpMethod, JMeterResponseCollector logger) {
         super();
         this.uri = uri;
         this.httpMethod = httpMethod;
@@ -52,8 +44,6 @@ public class ResultSummary {
         failCount = (logger.getNum4XX() + logger.getNum5XX());
         successFailPercentage = logger.getsuccessFailPercentage();
         reqPerSec = logger.getReqPerSec();
-        this.dataReference = dataReference;
-        this.resultSummaryCsv = resultSummaryCsv;
     }
         
 }

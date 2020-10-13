@@ -1,28 +1,20 @@
 package com.revature.controllers;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.models.Docutest;
 import com.revature.models.Request;
-import com.revature.models.ResultSummary;
-import com.revature.models.ResultSummaryCsv;
 import com.revature.models.SwaggerDocutest;
 import com.revature.models.SwaggerSummary;
 import com.revature.models.SwaggerUploadResponse;
 import com.revature.services.JMeterService;
 import com.revature.services.OASService;
-import com.revature.services.ResultSummaryService;
-import com.revature.services.S3Service;
 import com.revature.services.SwaggerSummaryService;
 import com.revature.templates.LoadTestConfig;
 import com.revature.templates.SwaggerSummaryDTO;
@@ -31,7 +23,6 @@ import io.swagger.parser.SwaggerParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,8 +45,6 @@ public class SwaggerfileController {
     private OASService oasService;
     @Autowired
     private ObjectMapper mapper;
-    @Autowired
-    private ResultSummaryService resultSummaryService;
 
     @PostMapping("/upload")
     public ResponseEntity<SwaggerUploadResponse> uploadSwaggerFile(@RequestParam("file") MultipartFile file, @RequestParam("LoadTestConfig") String ltcString) throws IOException {
@@ -115,24 +104,5 @@ public class SwaggerfileController {
         
         return ResponseEntity.ok(swaggerSummaryDtos);
     }
-    
-    @GetMapping("/csv/{id}")
-    public ResponseEntity<byte[]> getResultSummaryCsv(@PathVariable("id") int id) {
-        Optional<ResultSummary> rs = resultSummaryService.getById(id);
-        if (!rs.isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
         
-        ResultSummaryCsv csv = rs.get().getResultSummaryCsv();
-        if (csv == null) {
-            return ResponseEntity.noContent().build();
-        }
-        
-        byte[] byteCsv = csv.getByteCsv();
-        
-        MediaType type = MediaType.parseMediaType("text/csv");
-        
-        return ResponseEntity.ok().contentType(type).body(byteCsv);
-    }
-    
 }

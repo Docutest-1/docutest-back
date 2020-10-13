@@ -1,7 +1,9 @@
 package com.revature.services;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.regions.Regions;
@@ -11,22 +13,23 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.opencsv.CSVWriter;
 import org.springframework.stereotype.Component;
 
 @Component
-public class S3Service {
+public class S3CSVService {
     
     private AmazonS3 s3Client;
     private static final String BUCKET_NAME = "docutestbucket";
     
-    public S3Service() {
+    public S3CSVService() {
         s3Client = AmazonS3ClientBuilder.standard()
                 .withCredentials(new EnvironmentVariableCredentialsProvider())
                 .withRegion(Regions.US_EAST_2)
                 .build();
     }
     
-    public S3Service(AmazonS3 s3Client) {
+    public S3CSVService(AmazonS3 s3Client) {
         this.s3Client = s3Client;
     }
         
@@ -51,6 +54,12 @@ public class S3Service {
         }
         
         return true;
+    }
+    
+    public CSVWriter createWriter(ByteArrayOutputStream stream) {
+        OutputStreamWriter streamWriter = new OutputStreamWriter(stream);
+        
+        return new CSVWriter(streamWriter);
     }
 
 }
