@@ -59,6 +59,8 @@ class JMeterServiceTest {
     public static final String DIRECTORY_PATH = "./datafiles";
     @Mock
     private SwaggerSummaryService sss;
+    @Mock
+    private S3Service s3Service;
     
     @Autowired
     private static OASService adapter;

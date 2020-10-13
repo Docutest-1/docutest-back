@@ -1,0 +1,56 @@
+package com.revature.services;
+
+import java.io.File;
+import java.io.InputStream;
+
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import org.springframework.stereotype.Component;
+
+@Component
+public class S3Service {
+    
+    private AmazonS3 s3Client;
+    private static final String BUCKET_NAME = "docutestbucket";
+    
+    public S3Service() {
+        s3Client = AmazonS3ClientBuilder.standard()
+                .withCredentials(new EnvironmentVariableCredentialsProvider())
+                .withRegion(Regions.US_EAST_2)
+                .build();
+    }
+    
+    public S3Service(AmazonS3 s3Client) {
+        this.s3Client = s3Client;
+    }
+        
+    public S3Object getObjectFromBucket(String key) {
+        S3Object object;
+        try {
+            object = s3Client.getObject(BUCKET_NAME, key);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+        
+        return object;
+    }
+    
+    public boolean putObjectInBucket(String key, InputStream file) {
+        try {
+            s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key, file, new ObjectMetadata())
+                    .withCannedAcl(CannedAccessControlList.PublicRead));
+        } catch (Exception ex) {
+            return false;
+        }
+        
+        return true;
+    }
+
+}

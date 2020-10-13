@@ -1,5 +1,6 @@
 package com.revature.services;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +52,8 @@ public class JMeterService {
     public static final String BASE_FILE_PATH = "./datafiles/user_";
 
     public static final String PROPERTIES_PATH = "/jmeter.properties";
+    
+    public static final String S3_DOMAIN = "https://docutestbucket.s3.us-east-2.amazonaws.com";
 
     private LoadTestConfig testConfig = new LoadTestConfig();
 
@@ -59,6 +62,12 @@ public class JMeterService {
 
     @Autowired
     private ResultSummaryCsvService rscs;
+    
+    @Autowired
+    private ResultSummaryService rss;
+    
+    @Autowired
+    private S3Service s3Service;
     
     @PostConstruct
     private void loadProperties() {
@@ -170,15 +179,23 @@ public class JMeterService {
                 // Save CSV to database in ResultSummaryCsv
                 writer.close();
                 resultSummaryCsv.setByteCsv(stream.toByteArray());
-
+                
+                // Insert resultsummary and csv to S3 bucket
                 ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger,
                         resultSummaryCsv);
+                resultSummary = rss.insert(resultSummary);
+                InputStream is = new ByteArrayInputStream(stream.toByteArray());
+                String filename = "resultsummary_csv_" + resultSummary.getId() + ".csv";
+                s3Service.putObjectInBucket(filename, is);
+                resultSummary.setDataReference(S3_DOMAIN + "/" + filename);
+                
+                // Retrieve swaggersummary and add resultsummaries to swaggersummary
                 Optional<SwaggerSummary> optSwaggerSummary = sss.getById(swaggerSummaryId);
                 if (optSwaggerSummary.isPresent()) {
                     SwaggerSummary swaggerSummary = optSwaggerSummary.get();
                     swaggerSummary.getResultsummaries().add(resultSummary);
                     sss.update(swaggerSummary);
-                } 
+                }
                 
             } catch (Exception e) {
                 log.error("EXCEPTION FOR ENDPOINT {} WITH METHOD {}", element.getPath(), element.getMethod());

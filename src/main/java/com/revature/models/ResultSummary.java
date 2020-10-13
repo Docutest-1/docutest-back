@@ -31,6 +31,7 @@ public class ResultSummary {
     private int failCount;
     private double successFailPercentage;
     private double reqPerSec;
+    private String dataReference;
     
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
@@ -51,6 +52,7 @@ public class ResultSummary {
         failCount = (logger.getNum4XX() + logger.getNum5XX());
         successFailPercentage = logger.getsuccessFailPercentage();
         reqPerSec = logger.getReqPerSec();
+        this.dataReference = dataReference;
         this.resultSummaryCsv = resultSummaryCsv;
     }
         

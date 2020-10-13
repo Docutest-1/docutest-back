@@ -1,11 +1,15 @@
 package com.revature.controllers;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.models.Docutest;
@@ -18,6 +22,7 @@ import com.revature.models.SwaggerUploadResponse;
 import com.revature.services.JMeterService;
 import com.revature.services.OASService;
 import com.revature.services.ResultSummaryService;
+import com.revature.services.S3Service;
 import com.revature.services.SwaggerSummaryService;
 import com.revature.templates.LoadTestConfig;
 import com.revature.templates.SwaggerSummaryDTO;
