@@ -76,7 +76,7 @@ public class TestUtil {
         Endpoint endpoint = new Endpoint();
         endpoint.setBasePath("/");
         endpoint.setPath("/");
-        endpoint.setBaseUrl("blazedemo.com");
+        endpoint.setBaseUrl("google.com");
         endpoint.setPort(80);
         Request req = new Request();
         req.setEndpoint(endpoint);
@@ -89,7 +89,7 @@ public class TestUtil {
         Endpoint endpoint2 = new Endpoint();
         endpoint2.setBasePath("/");
         endpoint2.setPath("/login");
-        endpoint2.setBaseUrl("blazedemo.com");
+        endpoint2.setBaseUrl("google.com");
         endpoint2.setPort(80);
         Request req2 = new Request();
         req2.setEndpoint(endpoint2);

@@ -14,12 +14,12 @@ import org.apache.jmeter.samplers.SampleResult;
 public class JMeterResponseCollector extends ResultCollector { 
     
     private static final long serialVersionUID = -4468726154521336732L;
-    private List<Long> responseTimes = new ArrayList<>();
+    private volatile List<Long> responseTimes = Collections.synchronizedList(new ArrayList<>());
     private long responseMax = 0;
     
     private long firstSampleStartTime = 0;
     private long sampleStartTime;
-    
+        
     // count of number of nXX status codes
     private int[] statusCodeCount = new int[5];
     
@@ -28,10 +28,11 @@ public class JMeterResponseCollector extends ResultCollector {
     public JMeterResponseCollector(Summariser summer, CSVWriter writer) {
         super(summer);
         this.writer = writer;
+        this.responseTimes = Collections.synchronizedList(new ArrayList<>());
     }
 
     @Override
-    public void sampleOccurred(SampleEvent e) {
+    public synchronized void sampleOccurred(SampleEvent e) {
         super.sampleOccurred(e);
         SampleResult r = e.getResult();
         if (firstSampleStartTime == 0) {

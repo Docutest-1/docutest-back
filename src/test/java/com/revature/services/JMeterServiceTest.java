@@ -171,7 +171,7 @@ class JMeterServiceTest {
     @Test
     void testLoadTestingDurationMulti() {
         testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.multi));
-        loadConfig.setDuration(10);
+        loadConfig.setDuration(3);
         loadConfig.setLoops(-1);
 
         List<byte[]> fileList = jm.loadTesting(testSpecs, loadConfig, 1);

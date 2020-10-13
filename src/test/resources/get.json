@@ -7,7 +7,7 @@
         "contact": {}
     },
 
-    "host": "blazedemo.com:80",
+    "host": "google.com:80",
     "basePath": "/",
     "tags": [],
     "paths": {

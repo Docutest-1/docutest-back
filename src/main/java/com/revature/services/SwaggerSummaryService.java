@@ -76,11 +76,11 @@ public class SwaggerSummaryService {
 
         if (ltc.getLoops() > 0) {
             long singleTest = (ltc.getRampUp() + ltc.getLoops() * 500 + 5000);
-            sur.setEta(System.currentTimeMillis() + (singleTest * endPointCount));
+            sur.setEta(System.currentTimeMillis() + 10000 + ((singleTest * endPointCount) + 2000));
         }
         if (ltc.getDuration() != 0) {
             long singleTest = (ltc.getDuration() * 1000 + 5000);
-            sur.setEta(System.currentTimeMillis() + (singleTest * endPointCount));
+            sur.setEta(System.currentTimeMillis() + 10000 + ((singleTest * endPointCount) + 2000));
         }
         return sur;
 
