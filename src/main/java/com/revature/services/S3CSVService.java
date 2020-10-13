@@ -1,7 +1,6 @@
 package com.revature.services;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 
@@ -38,7 +37,6 @@ public class S3CSVService {
         try {
             object = s3Client.getObject(BUCKET_NAME, key);
         } catch (Exception ex) {
-            ex.printStackTrace();
             return null;
         }
         

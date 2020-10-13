@@ -9,9 +9,10 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +28,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.revature.aspects.AspectLogger;
@@ -47,6 +50,7 @@ import io.swagger.parser.SwaggerParser;
 
 @SpringBootTest(classes = DocutestApplication.class)
 @ContextConfiguration(classes = {JMeterService.class, AspectLogger.class})
+@ExtendWith(SpringExtension.class)
 @Transactional
 class JMeterServiceTest {
 
@@ -55,8 +59,7 @@ class JMeterServiceTest {
     private JMeterService jm;
     
     private LoadTestConfig loadConfig = new LoadTestConfig();
-    private static final String CSV_FILE_PATH = "./datafiles/user_0.csv";
-    public static final String DIRECTORY_PATH = "./datafiles";
+
     @Mock
     private SwaggerSummaryService sss;
     @Mock
@@ -88,9 +91,6 @@ class JMeterServiceTest {
         loadConfig.setTestPlanName("JMeterServicesTest");
         
         TestUtil.initFields();
-
-        File directory = new File(DIRECTORY_PATH);
-        deleteFolder(directory);
         MockitoAnnotations.initMocks(this);
         
         when(sss.getById(anyInt())).thenReturn(Optional.of(new SwaggerSummary()));
@@ -106,9 +106,10 @@ class JMeterServiceTest {
         loadConfig.setLoops(2);
         int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
 
-        jm.loadTesting(testSpecs, loadConfig, 1);
+        List<byte[]> fileList = jm.loadTesting(testSpecs, loadConfig, 1);
+        InputStream is = new ByteArrayInputStream(fileList.get(0));
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             int counter = getCounter(reader);
             System.out.println("Expected Request Count: " + expectedReq);
             System.out.println("Actual Request Count: " + counter);
@@ -123,13 +124,16 @@ class JMeterServiceTest {
     void testLoadTestingLoopMultiReq() {
         testSpecs = new SwaggerDocutest(adapter.getRequests(TestUtil.multi));
         loadConfig.setLoops(2);
+        
+        int numTests = 2;
         int expectedReq = (loadConfig.getLoops() * loadConfig.getThreads());
+        
+        List<byte[]> fileList = jm.loadTesting(testSpecs, loadConfig, 1);
 
-        jm.loadTesting(testSpecs, loadConfig, 1);
-        for (int i = 0; i < 2; i++) {
-            String filename = JMeterService.BASE_FILE_PATH + i + ".csv";
-            System.out.println(filename);
-            try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+        for (int i = 0; i < numTests; i++) {            
+            InputStream is = new ByteArrayInputStream(fileList.get(i));
+            
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
                 int counter = getCounter(reader);
                 System.out.println("Expected Request Count: " + expectedReq);
                 System.out.println("Actual Request Count: " + counter);
@@ -148,9 +152,10 @@ class JMeterServiceTest {
         loadConfig.setDuration(3);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(testSpecs, loadConfig, 1);
+        List<byte[]> fileList = jm.loadTesting(testSpecs, loadConfig, 1);
+        InputStream is = new ByteArrayInputStream(fileList.get(0));
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(CSV_FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             long diff = getDiff(reader);
             // flat amount + 5% of duration in ms
             System.out.println("Difference between expected and actual duration (ms): "
@@ -169,11 +174,12 @@ class JMeterServiceTest {
         loadConfig.setDuration(10);
         loadConfig.setLoops(-1);
 
-        jm.loadTesting(testSpecs, loadConfig, 1);
+        List<byte[]> fileList = jm.loadTesting(testSpecs, loadConfig, 1);
 
         for (int i = 0; i < 2; i++) {
-            String filename = JMeterService.BASE_FILE_PATH + i + ".csv";
-            try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            InputStream is = new ByteArrayInputStream(fileList.get(i));
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
                 long diff = getDiff(reader);
                 long expectedDuration = loadConfig.getDuration() * 1000;
                 System.out.println(
@@ -306,21 +312,6 @@ class JMeterServiceTest {
     }
 
     // ------------------------------ HELPER METHODS ---------------------------------
-    
-    // helper method to clear folder between each test
-    public static void deleteFolder(File folder) {
-        File[] files = folder.listFiles();
-        if (files != null) {
-            for (File f : files) {
-                if (f.isDirectory()) {
-                    deleteFolder(f);
-                } else {
-                    f.delete();
-                }
-            }
-        }
-        folder.delete();
-    }
 
     // helper method for duration tests to get difference between latest starttime
     // and initial starttime, in ms
@@ -335,12 +326,12 @@ class JMeterServiceTest {
 
                 String timestamp = row[0];
                 if (counter == 1) {
-                    startTime = Long.parseLong(timestamp);
+                    startTime = Long.parseLong(timestamp.replaceAll("\"",""));
                 }
             }
             counter++;
         }
-        return Long.parseLong(row[0]) - startTime;
+        return Long.parseLong(row[0].replaceAll("\"", "")) - startTime;
     }
 
     // helper method to get number of httprequests sent for loop-based tests

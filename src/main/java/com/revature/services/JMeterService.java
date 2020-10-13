@@ -47,9 +47,6 @@ public class JMeterService {
     // Test Elements can be nested within each other
     private HashTree hashTree = new HashTree();
 
-    // replace user with username later
-    public static final String BASE_FILE_PATH = "./datafiles/user_";
-
     public static final String PROPERTIES_PATH = "/jmeter.properties";
     
     public static final String S3_DOMAIN = "https://docutestbucket.s3.us-east-2.amazonaws.com";
@@ -94,8 +91,9 @@ public class JMeterService {
      * @param propertiesPath File path to the properties JMeter Properties file
      */
     @Transactional
-    public void loadTesting(Docutest input, LoadTestConfig testConfig, int swaggerSummaryId) {
-
+    public List<byte[]> loadTesting(Docutest input, LoadTestConfig testConfig, int swaggerSummaryId) {
+        List<byte[]> returnFiles = new ArrayList<>();
+        
         this.testConfig = testConfig;
         StandardJMeterEngine jm = new StandardJMeterEngine();
 
@@ -104,8 +102,6 @@ public class JMeterService {
         
         input.getRequests().sort(new RequestComparator());
         List<HTTPSamplerProxy> httpSampler = this.createHTTPSamplerProxy(input);
-
-        int reqNumber = 0;
 
         // run a separate load test for each req since we want individual CSV/summaries
         // for each
@@ -146,13 +142,6 @@ public class JMeterService {
                 summer = new Summariser(summariserName);
             }
 
-            // Temporary file to be uploaded to S3
-            // Will need to change the filename if we want subdirectories for each user
-            // Definitely need to change if we want multiple users to run multiple tests at
-            // once
-            String logFile = BASE_FILE_PATH + reqNumber + ".csv";
-            reqNumber++;
-
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             CSVWriter writer = s3Service.createWriter(stream);
             
@@ -162,7 +151,6 @@ public class JMeterService {
 
             JMeterResponseCollector logger;
             logger = new JMeterResponseCollector(summer, writer);
-            logger.setFilename(logFile);
 
             hashTree.add(hashTree.getArray()[0], logger);
 
@@ -180,7 +168,9 @@ public class JMeterService {
                 // Insert resultsummary and csv to S3 bucket
                 ResultSummary resultSummary = new ResultSummary(element.getUrl().toURI(), element.getMethod(), logger);
                 resultSummary = rss.insert(resultSummary);
-                InputStream is = new ByteArrayInputStream(stream.toByteArray());
+                byte[] fileByteArr = stream.toByteArray();
+                InputStream is = new ByteArrayInputStream(fileByteArr);
+                returnFiles.add(fileByteArr);
                 String filename = "resultsummary_csv_" + resultSummary.getId() + ".csv";
                 s3Service.putObjectInBucket(filename, is);
                 resultSummary.setDataReference(S3_DOMAIN + "/" + filename);
@@ -198,6 +188,7 @@ public class JMeterService {
                 log.trace("STACK TRACE: ", e);
             }
         }
+        return returnFiles;
 
     }
 
