@@ -159,9 +159,9 @@ class JMeterServiceTest {
             long diff = getDiff(reader);
             // flat amount + 5% of duration in ms
             System.out.println("Difference between expected and actual duration (ms): "
-                    + Math.abs((loadConfig.getDuration() * 1000) - diff));
+                    + Math.abs((loadConfig.getDuration() * 1000L) - diff));
             assertTrue(Math
-                    .abs((loadConfig.getDuration() * 1000) - diff) < (2000 + (loadConfig.getDuration() * 1000 / 20)));
+                    .abs((loadConfig.getDuration() * 1000L) - diff) < (2000 + (loadConfig.getDuration() * 1000L / 20L)));
         } catch (IOException e) {
             e.printStackTrace();
             fail();
@@ -186,7 +186,7 @@ class JMeterServiceTest {
                         "Difference between expected and actual duration (ms): " + Math.abs(expectedDuration - diff));
                 System.out.println(diff);
                 // flat amount + 5% of duration in ms
-                assertTrue(Math.abs((expectedDuration) - diff) < (2000 + (loadConfig.getDuration() * 1000 / 20)));
+                assertTrue(Math.abs((expectedDuration) - diff) < (2000 + (loadConfig.getDuration() * 1000L / 20)));
             } catch (IOException e) {
                 e.printStackTrace();
                 fail();
@@ -301,10 +301,9 @@ class JMeterServiceTest {
         }
     }
     
-    @Disabled
+    @Disabled("Used for sanity check to check request structure with Wireshark")
     @Test
     void sanityCheck() {
-        // for use with wireshark to check req structure
         Swagger p2 = new SwaggerParser().read("src/test/resources/project2.json");
         testSpecs = new SwaggerDocutest(adapter.getRequests(p2));
         loadConfig.setLoops(2);

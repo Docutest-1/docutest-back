@@ -26,7 +26,7 @@ class S3CSVServiceTest {
     }
     
     @Test
-    public void testGetObjectFromBucket() {
+    void testGetObjectFromBucket() {
         S3Object expected = new S3Object();
         when(mockClient.getObject(Matchers.eq("docutestbucket"), Matchers.eq("test"))).thenReturn(expected);
         
@@ -35,7 +35,7 @@ class S3CSVServiceTest {
     }
     
     @Test
-    public void testGetObjectFromBucket_doesNotExist() {
+    void testGetObjectFromBucket_doesNotExist() {
         when(mockClient.getObject(Matchers.eq("docutestbucket"), Matchers.eq("test"))).thenThrow(SdkClientException.class);
         
         S3Object actual = s3Service.getObjectFromBucket("test");
@@ -43,13 +43,13 @@ class S3CSVServiceTest {
     }
     
     @Test
-    public void testPutObjectInBucket() {
+    void testPutObjectInBucket() {
         InputStream file = mock(InputStream.class);
         assertTrue(s3Service.putObjectInBucket("test", file));
     }
     
     @Test
-    public void testPutObjectInBucket_exception() {
+    void testPutObjectInBucket_exception() {
         InputStream file = mock(InputStream.class);
         
         when(mockClient.putObject(Matchers.any())).thenThrow(SdkClientException.class);

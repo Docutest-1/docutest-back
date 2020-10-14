@@ -27,7 +27,7 @@ class JMeterResponseCollectorTest {
     
     private static List<SampleEvent> sampleEvents = new ArrayList<>();
     
-    private CSVWriter writer;
+    private transient CSVWriter writer;
         
     @BeforeAll
     static void setUpBeforeClass() throws Exception {
